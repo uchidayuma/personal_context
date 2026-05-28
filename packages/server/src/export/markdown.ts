@@ -1,5 +1,5 @@
 import { eq, and, asc } from 'drizzle-orm'
-import { db } from '../db/client.js'
+import type { Db } from '../types.js'
 import { structuredFacts, lifeTimeline, sessionVignettes, professionalRecords, users } from '../db/schema.js'
 
 export interface ExportFiles {
@@ -18,6 +18,7 @@ export interface ExportFiles {
 }
 
 export async function exportToMarkdown(
+  db: Db,
   userId: string,
   includePrivate = false,
 ): Promise<ExportFiles> {

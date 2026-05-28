@@ -14,6 +14,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(false)
   const [ended, setEnded] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const voice = useVoiceInput((text) => setInput(text))
 
@@ -44,8 +45,15 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, message: userMessage }),
       })
-      const data = await res.json() as { response: string; shouldEnd: boolean }
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      const data = await res.json() as { response?: string; shouldEnd?: boolean; error?: string; code?: string }
+      if (!res.ok) {
+        if (data.code === 'MODEL_NOT_SUPPORTED') {
+          setModelError(data.error ?? 'Model does not support structured output.')
+        }
+        setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
+        return
+      }
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response! }])
       if (data.shouldEnd) setEnded(true)
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
@@ -106,6 +114,12 @@ export default function Chat() {
       </div>
 
       <div className={styles.inputArea}>
+        {modelError && (
+          <div className={styles.modelErrorBanner}>
+            <strong>モデル設定エラー</strong><br />
+            {modelError}
+          </div>
+        )}
         {voice.error && <div className={styles.errorMsg}>{voice.error}</div>}
         <div className={styles.inputRow}>
           {sessionId && !ended && (

@@ -2,9 +2,9 @@ import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { createRequire } from 'module'
 import { eq, and, sql, isNull } from 'drizzle-orm'
-import { db, DEFAULT_USER_ID } from '../db/client.js'
 import * as schema from '../db/schema.js'
-import { extractFromDocument } from '../llm/provider.js'
+import { extractFromDocument, ModelStructuredOutputError } from '../llm/provider.js'
+import type { AppVariables } from '../types.js'
 
 // pdf-parse and xlsx are CJS modules; use createRequire for ESM compatibility
 const require = createRequire(import.meta.url)
@@ -37,7 +37,7 @@ async function extractText(file: File): Promise<string> {
   return buffer.toString('utf-8')
 }
 
-export const importRoute = new Hono()
+export const importRoute = new Hono<{ Variables: AppVariables }>()
 
 importRoute.post('/', async (c) => {
   let formData: FormData
@@ -65,9 +65,18 @@ importRoute.post('/', async (c) => {
 
   if (!text.trim()) return c.json({ error: 'no text could be extracted from this file' }, 400)
 
-  const result = await extractFromDocument(text)
+  let result: Awaited<ReturnType<typeof extractFromDocument>>
+  try {
+    result = await extractFromDocument(text)
+  } catch (err) {
+    if (err instanceof ModelStructuredOutputError) {
+      return c.json({ error: err.message, code: err.code }, 422)
+    }
+    throw err
+  }
 
-  const userId = DEFAULT_USER_ID
+  const db = c.get('db')
+  const userId = c.get('userId')
   const imported = { timeline: 0, professional: 0, facts: 0 }
 
   // Replace-on-reimport: clear previous import data before inserting new records

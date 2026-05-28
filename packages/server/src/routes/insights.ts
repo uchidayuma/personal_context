@@ -1,28 +1,31 @@
 import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
-import { db, DEFAULT_USER_ID, getUserLanguage } from '../db/client.js'
+import { getUserLanguage } from '../db/client.js'
 import { generateInsights } from '../llm/provider.js'
 import * as schema from '../db/schema.js'
+import type { AppVariables } from '../types.js'
 
 const { structuredFacts, lifeTimeline } = schema
 
-export const insightsRoute = new Hono()
+export const insightsRoute = new Hono<{ Variables: AppVariables }>()
 
 insightsRoute.get('/', async (c) => {
+  const db = c.get('db')
+  const userId = c.get('userId')
   try {
     const [facts, timeline, language] = await Promise.all([
       db.select({ category: structuredFacts.category, fact: structuredFacts.fact })
         .from(structuredFacts)
-        .where(eq(structuredFacts.userId, DEFAULT_USER_ID))
+        .where(eq(structuredFacts.userId, userId))
         .limit(30),
       db.select({
         year: lifeTimeline.eventYear,
         description: lifeTimeline.eventDescription,
       })
         .from(lifeTimeline)
-        .where(eq(lifeTimeline.userId, DEFAULT_USER_ID))
+        .where(eq(lifeTimeline.userId, userId))
         .orderBy(lifeTimeline.eventYear),
-      getUserLanguage(DEFAULT_USER_ID),
+      getUserLanguage(db, userId),
     ])
 
     if (facts.length === 0 && timeline.length === 0) {

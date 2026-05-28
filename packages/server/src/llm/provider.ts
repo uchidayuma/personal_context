@@ -1,9 +1,44 @@
-import { createDeepSeek } from '@ai-sdk/deepseek'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
 import { STRUCTURED_FACT_CATEGORIES } from '../db/schema.js'
+
+export class ModelStructuredOutputError extends Error {
+  readonly code = 'MODEL_NOT_SUPPORTED' as const
+  constructor(modelId: string) {
+    super(
+      `Structured output failed for model "${modelId}" after retrying. ` +
+      `If this keeps happening, ensure your LLM_MODEL supports structured output. ` +
+      `Compatible models: deepseek-chat, gpt-4o, claude-3-haiku-*, etc. ` +
+      `Known incompatible: deepseek-v4-flash.`,
+    )
+    this.name = 'ModelStructuredOutputError'
+  }
+}
+
+async function wrapStructuredOutputError<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AI_NoObjectGeneratedError') {
+        console.warn(`[LLM] generateObject failed (attempt ${attempt}):`, JSON.stringify({
+          message: err.message,
+          cause: (err as any).cause,
+          text: (err as any).text,
+        }, null, 2))
+        if (attempt < 2) {
+          continue
+        }
+        const modelId = process.env.LLM_MODEL ?? '(default)'
+        throw new ModelStructuredOutputError(modelId)
+      }
+      throw err
+    }
+  }
+  throw new Error('unreachable')
+}
 
 export function getLLM() {
   const provider = process.env.LLM_PROVIDER ?? 'deepseek'
@@ -23,8 +58,11 @@ export function getLLM() {
         apiKey: 'ollama',
       })(model ?? 'llama3.2')
 
-    default: // deepseek
-      return createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY })(model ?? 'deepseek-chat')
+    default: // deepseek — use OpenAI-compatible endpoint for reliable generateObject (tool mode)
+      return createOpenAI({
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        baseURL: 'https://api.deepseek.com/v1',
+      })(model ?? 'deepseek-chat')
   }
 }
 
@@ -40,12 +78,12 @@ export async function generateInterviewResponse(
   systemPrompt: string,
   messages: { role: 'user' | 'assistant'; content: string }[],
 ): Promise<InterviewResponse> {
-  const { object } = await generateObject({
+  const { object } = await wrapStructuredOutputError(() => generateObject({
     model: getLLM(),
     schema: InterviewResponseSchema,
     abortSignal: AbortSignal.timeout(60_000),
     messages: [{ role: 'system', content: systemPrompt }, ...messages],
-  })
+  }))
   return object
 }
 
@@ -85,7 +123,7 @@ const ExtractionSchema = z.object({
     visibility: z.enum(['public', 'private']),
   })),
   timeline: z.array(z.object({
-    event_year: z.number(),
+    event_year: z.number().nullable(),
     event_month: z.number().nullable(),
     age_at_event: z.number().nullable(),
     event_description: z.string(),
@@ -128,7 +166,7 @@ const DocumentImportSchema = z.object({
 export type DocumentImportResult = z.infer<typeof DocumentImportSchema>
 
 export async function extractFromDocument(text: string): Promise<DocumentImportResult> {
-  const { object } = await generateObject({
+  const { object } = await wrapStructuredOutputError(() => generateObject({
     model: getLLM(),
     schema: DocumentImportSchema,
     abortSignal: AbortSignal.timeout(60_000),
@@ -150,7 +188,7 @@ export async function extractFromDocument(text: string): Promise<DocumentImportR
       },
       { role: 'user', content: text.slice(0, 8000) },
     ],
-  })
+  }))
   return object
 }
 
@@ -271,7 +309,7 @@ facts の補完ではなく、行動の痕跡を物語として記録する。
 export async function extractFactsFromConversation(
   conversation: string,
 ): Promise<ExtractionResult> {
-  const { object } = await generateObject({
+  const { object } = await wrapStructuredOutputError(() => generateObject({
     model: getLLM(),
     schema: ExtractionSchema,
     abortSignal: AbortSignal.timeout(60_000),
@@ -282,6 +320,6 @@ export async function extractFactsFromConversation(
       },
       { role: 'user', content: conversation },
     ],
-  })
+  }))
   return object
 }

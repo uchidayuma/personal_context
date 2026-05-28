@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       target: server
     ports:
       - "3001:3001"
@@ -17,11 +17,14 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      # Set WATCH=true to enable hot-reload (may cause instability on macOS due to polling)
+      # - WATCH=true
+      # - CHOKIDAR_USEPOLLING=true
 
   web:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       target: web
     ports:
       - "5173:5173"

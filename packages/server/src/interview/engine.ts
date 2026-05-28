@@ -1,5 +1,6 @@
 import { eq, and, notInArray, desc, asc, sql } from 'drizzle-orm'
-import { db, DEFAULT_USER_ID, getUserLanguage } from '../db/client.js'
+import { DEFAULT_USER_ID, getUserLanguage } from '../db/client.js'
+import type { Db } from '../types.js'
 import {
   sessions, users, rawLogs, questions, questionTranslations,
   userQuestions, structuredFacts, lifeTimeline,
@@ -14,7 +15,7 @@ import {
 const MAX_QUESTIONS_PER_SESSION = 3
 const MAX_FOLLOWUPS_PER_QUESTION = 2
 
-async function selectNextQuestion(userId: string, language: string) {
+async function selectNextQuestion(db: Db, userId: string, language: string) {
   const answered = db
     .select({ questionId: userQuestions.questionId })
     .from(userQuestions)
@@ -52,7 +53,7 @@ async function selectNextQuestion(userId: string, language: string) {
   return next ?? null
 }
 
-async function getExistingFactsSummary(userId: string): Promise<string> {
+async function getExistingFactsSummary(db: Db, userId: string): Promise<string> {
   const facts = await db
     .select()
     .from(structuredFacts)
@@ -163,8 +164,8 @@ ${existingFacts}
 7. 回答は必ず指定されたJSON形式で行い、日本語のメッセージは JSON の "response" フィールドに含めてください。`
 }
 
-export async function startOnboarding(userId = DEFAULT_USER_ID) {
-  const language = await getUserLanguage(userId)
+export async function startOnboarding(db: Db, userId = DEFAULT_USER_ID) {
+  const language = await getUserLanguage(db, userId)
   const sessionId = crypto.randomUUID()
   await db.insert(sessions).values({ id: sessionId, userId, type: 'onboarding' })
 
@@ -175,9 +176,9 @@ export async function startOnboarding(userId = DEFAULT_USER_ID) {
   return { sessionId, message: opening }
 }
 
-export async function startSession(userId = DEFAULT_USER_ID) {
-  const language = await getUserLanguage(userId)
-  const question = await selectNextQuestion(userId, language)
+export async function startSession(db: Db, userId = DEFAULT_USER_ID) {
+  const language = await getUserLanguage(db, userId)
+  const question = await selectNextQuestion(db, userId, language)
   const existingFacts = await (async () => {
     const facts = await db
       .select()
@@ -216,16 +217,17 @@ export async function startSession(userId = DEFAULT_USER_ID) {
 }
 
 export async function processMessage(
+  db: Db,
   sessionId: string,
-  userMessage: string,
   userId = DEFAULT_USER_ID,
+  userMessage: string,
 ) {
   const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
   if (!session || session.status !== 'active') {
     throw new Error('Session not found or already ended')
   }
 
-  const language = await getUserLanguage(userId)
+  const language = await getUserLanguage(db, userId)
 
   await db.insert(rawLogs).values({
     id: crypto.randomUUID(),
@@ -314,7 +316,7 @@ export async function processMessage(
 
     const conversationText = history.map(l => `[${l.role}]: ${l.content}`).join('\n\n')
     try {
-      await extractAndSaveFacts(sessionId, userId, conversationText)
+      await extractAndSaveFacts(db, sessionId, userId, conversationText)
     } catch (err) {
       console.error('Failed to extract facts from conversation:', err)
     }
@@ -322,7 +324,7 @@ export async function processMessage(
     if (session.currentQuestionId) {
       await db.insert(userQuestions).values({ userId, questionId: session.currentQuestionId }).onConflictDoNothing()
     }
-    const nextQuestion = await selectNextQuestion(userId, language)
+    const nextQuestion = await selectNextQuestion(db, userId, language)
     await db.update(sessions)
       .set({
         questionsAsked: session.questionsAsked + 1,
@@ -339,7 +341,7 @@ export async function processMessage(
   return { response, shouldEnd: shouldEndSession }
 }
 
-async function extractAndSaveFacts(sessionId: string, userId: string, conversation: string) {
+async function extractAndSaveFacts(db: Db, sessionId: string, userId: string, conversation: string) {
   const result = await extractFactsFromConversation(conversation)
 
   const logIds = await db
@@ -362,6 +364,7 @@ async function extractAndSaveFacts(sessionId: string, userId: string, conversati
   }
 
   for (const event of result.timeline) {
+    if (event.event_year === null) continue
     const timelineId = crypto.randomUUID()
     await db.insert(lifeTimeline).values({
       id: timelineId, userId,

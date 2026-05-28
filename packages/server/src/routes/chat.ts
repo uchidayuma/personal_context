@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { processMessage } from '../interview/engine.js'
-import { DEFAULT_USER_ID } from '../db/client.js'
+import { ModelStructuredOutputError } from '../llm/provider.js'
+import type { AppVariables } from '../types.js'
 
-export const chatRoute = new Hono()
+export const chatRoute = new Hono<{ Variables: AppVariables }>()
 
 chatRoute.post('/', async (c) => {
   const body = await c.req.json<{ sessionId: string; message: string }>()
@@ -13,13 +14,17 @@ chatRoute.post('/', async (c) => {
 
   try {
     const { response, shouldEnd } = await processMessage(
+      c.get('db'),
       body.sessionId,
+      c.get('userId'),
       body.message.trim(),
-      DEFAULT_USER_ID,
     )
     return c.json({ response, shouldEnd })
   } catch (err) {
-    console.error(err)
+    console.error('[chat] error:', err)
+    if (err instanceof ModelStructuredOutputError) {
+      return c.json({ error: err.message, code: err.code }, 422)
+    }
     return c.json({ error: 'Failed to process message' }, 500)
   }
 })

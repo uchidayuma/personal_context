@@ -14,6 +14,25 @@
 | i18n | react-i18next + i18next-browser-languagedetector | Supported: `ja` / `en` |
 | Container | Docker (node:22-alpine) + docker-compose | docker-compose for local dev, ECS for production |
 
+### LLM Model Compatibility
+
+This system uses `generateObject` (Vercel AI SDK) for three operations:
+- Interview response generation (`generateInterviewResponse`)
+- Fact/vignette extraction after each session (`extractFactsFromConversation`)
+- Document import parsing (`extractFromDocument`)
+
+`generateObject` forces the model to return a JSON object matching a Zod schema. **The model must support structured output / function calling.** Models that return plain text will cause `AI_NoObjectGeneratedError` and the UI will show a configuration error banner.
+
+| Model | Compatible | Notes |
+|---|---|---|
+| `deepseek-chat` (default) | ✅ | Recommended |
+| `gpt-4o`, `gpt-4o-mini` | ✅ | Set `LLM_PROVIDER=openai` |
+| `claude-3-haiku-*`, `claude-3-sonnet-*` | ✅ | Set `LLM_PROVIDER=anthropic` |
+| `deepseek-v4-flash` | ❌ | Does not support structured output |
+| Ollama models (varies) | ⚠️ | Only models with tool-use support work |
+
+When an incompatible model is used, the server returns HTTP 422 with `code: "MODEL_NOT_SUPPORTED"` and a descriptive message. The chat UI displays this as a yellow warning banner.
+
 ### Monorepo structure
 
 ```

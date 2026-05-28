@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["packages/mcp/dist/index.js"],
+      "env": {
+        "DB_PATH": "./data/personal_context.db"
+      }
+    }
+  }
+}

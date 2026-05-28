@@ -1,20 +1,33 @@
 import { Hono } from 'hono'
-import { db, DEFAULT_USER_ID } from '../db/client.js'
 import * as schema from '../db/schema.js'
-import { eq, desc, asc } from 'drizzle-orm'
+import { eq, desc, asc, sql } from 'drizzle-orm'
+import type { AppVariables } from '../types.js'
 
 const { structuredFacts, lifeTimeline, sessionVignettes } = schema
 
-export const contextSummaryRoute = new Hono()
+export const contextSummaryRoute = new Hono<{ Variables: AppVariables }>()
 
 contextSummaryRoute.get('/', async (c) => {
-  const userId = DEFAULT_USER_ID
+  const db = c.get('db')
+  const userId = c.get('userId')
+
+  const ranked = db
+    .select({
+      category: structuredFacts.category,
+      fact: structuredFacts.fact,
+      rn: sql<number>`row_number() over (
+        partition by ${structuredFacts.category}
+        order by ${structuredFacts.createdAt} desc
+      )`.as('rn'),
+    })
+    .from(structuredFacts)
+    .where(eq(structuredFacts.userId, userId))
+    .as('ranked')
 
   const [facts, timeline, vignettes] = await Promise.all([
-    db.select().from(structuredFacts)
-      .where(eq(structuredFacts.userId, userId))
-      .orderBy(desc(structuredFacts.createdAt))
-      .limit(8),
+    db.select({ category: ranked.category, fact: ranked.fact })
+      .from(ranked)
+      .where(sql`${ranked.rn} <= 2`),
     db.select().from(lifeTimeline)
       .where(eq(lifeTimeline.userId, userId))
       .orderBy(asc(lifeTimeline.eventYear)),

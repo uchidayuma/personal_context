@@ -1,0 +1,24 @@
+{
+  "name": "@personal-context/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "personal-context-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.3",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "drizzle-orm": "^0.43.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

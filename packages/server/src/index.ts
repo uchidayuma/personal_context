@@ -3,8 +3,9 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { initDatabase, ensureDefaultUser } from './db/client.js'
+import { initDatabase, ensureDefaultUser, clearSimulateData, DEFAULT_USER_ID, db, simulateDb } from './db/client.js'
 import { seedQuestions } from './db/seed.js'
+import type { AppVariables } from './types.js'
 import { sessionsRoute } from './routes/sessions.js'
 import { chatRoute } from './routes/chat.js'
 import { exportRoute } from './routes/export.js'
@@ -17,16 +18,30 @@ import { insightsRoute } from './routes/insights.js'
 
 async function bootstrap() {
   await initDatabase()
-  await ensureDefaultUser()
-  await seedQuestions()
+  await ensureDefaultUser(db)
+  await ensureDefaultUser(simulateDb)
+  await seedQuestions(db)
+  await seedQuestions(simulateDb)
 
-  const app = new Hono()
+  const app = new Hono<{ Variables: AppVariables }>()
 
   app.use(logger())
   app.use('/api/*', cors({
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
-    allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   }))
+
+  app.use('/api/*', async (c, next) => {
+    const isSimulate = c.req.header('X-Simulate') === 'true'
+    c.set('db', isSimulate ? simulateDb : db)
+    c.set('userId', DEFAULT_USER_ID)
+    await next()
+  })
+
+  app.delete('/api/simulate', async (c) => {
+    await clearSimulateData()
+    return c.json({ ok: true })
+  })
 
   app.route('/api/sessions', sessionsRoute)
   app.route('/api/chat', chatRoute)

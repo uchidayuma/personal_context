@@ -4,11 +4,18 @@
  * Runs a full session against the local API server using an LLM persona.
  *
  * Usage:
- *   pnpm simulate [onboarding|regular] [--claude|--deepseek] [persona-dir]
+ *   pnpm simulate [onboarding|regular] [options] [persona-dir]
  *
- * Provider:
- *   --claude    Use local Claude Code CLI (default — uses subscription, no extra cost)
- *   --deepseek  Use DeepSeek API (requires DEEPSEEK_API_KEY)
+ * Provider for persona generation (user side):
+ *   --claude     Use local Claude Code CLI (default — uses subscription, no extra cost)
+ *   --deepseek   Use DeepSeek API (requires DEEPSEEK_API_KEY)
+ *
+ * Options:
+ *   --turns N      Max conversation turns per session (default: 20)
+ *   --sessions N   Number of sessions to run (default: 3)
+ *
+ * Env vars (persona generation only — separate from server's LLM_MODEL):
+ *   SIMULATE_LLM_MODEL   Model for --deepseek persona (default: deepseek-chat)
  */
 
 import { readFileSync, existsSync } from 'fs'
@@ -25,13 +32,22 @@ loadEnv(join(process.cwd(), '.env'))
 const args = process.argv.slice(2)
 const MODE = (['onboarding', 'regular'].includes(args[0]) ? args[0] : 'onboarding') as 'onboarding' | 'regular'
 const PROVIDER: 'claude' | 'deepseek' = args.includes('--deepseek') ? 'deepseek' : 'claude'
-const PERSONA_DIR = args.find(a => !a.startsWith('--') && a !== MODE)
+
+const turnsArg = args.indexOf('--turns')
+const MAX_TURNS = turnsArg >= 0 ? parseInt(args[turnsArg + 1] ?? '20', 10) : 20
+
+const sessionsArg = args.indexOf('--sessions')
+const SESSION_COUNT = sessionsArg >= 0 ? parseInt(args[sessionsArg + 1] ?? '3', 10) : 3
+
+const PERSONA_DIR = args.find(a => !a.startsWith('--') && a !== MODE && !/^\d+$/.test(a))
   ?? join(homedir(), 'Dropbox/obsidian/escapejapan/input/context')
 
 const API_BASE = process.env.API_BASE ?? 'http://localhost:3001'
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY ?? ''
-const DEEPSEEK_MODEL = process.env.LLM_MODEL ?? 'deepseek-chat'
-const MAX_TURNS = 20
+const SIMULATE_LLM_MODEL = process.env.SIMULATE_LLM_MODEL ?? 'deepseek-chat'
+
+const SERVER_PROVIDER = process.env.LLM_PROVIDER ?? 'deepseek'
+const SERVER_MODEL = process.env.LLM_MODEL ?? 'deepseek-chat'
 
 function loadEnv(path: string) {
   if (!existsSync(path)) return
@@ -116,7 +132,7 @@ async function generateWithDeepSeek(prompt: string): Promise<string> {
       Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
+      model: SIMULATE_LLM_MODEL,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 400,
       temperature: 0.8,
@@ -137,11 +153,18 @@ async function generatePersonaResponse(history: Turn[], coachMessage: string, pe
 // API helpers
 // ---------------------------------------------------------------------------
 
+const SIM_HEADERS = { 'X-Simulate': 'true', 'Connection': 'close' }
+
+async function resetSimulate() {
+  const res = await fetch(`${API_BASE}/api/simulate`, { method: 'DELETE', headers: SIM_HEADERS })
+  if (!res.ok) throw new Error(`Failed to reset simulate data: ${res.status} ${await res.text()}`)
+}
+
 async function startSession(mode: 'onboarding' | 'regular'): Promise<{ sessionId: string; message: string }> {
   const url = mode === 'onboarding'
     ? `${API_BASE}/api/sessions/onboarding`
     : `${API_BASE}/api/sessions`
-  const res = await fetch(url, { method: 'POST' })
+  const res = await fetch(url, { method: 'POST', headers: SIM_HEADERS })
   if (!res.ok) throw new Error(`Failed to start session: ${res.status} ${await res.text()}`)
   return res.json()
 }
@@ -149,7 +172,7 @@ async function startSession(mode: 'onboarding' | 'regular'): Promise<{ sessionId
 async function chat(sessionId: string, message: string): Promise<{ response: string; shouldEnd: boolean }> {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...SIM_HEADERS },
     body: JSON.stringify({ sessionId, message }),
   })
   if (!res.ok) throw new Error(`Chat error: ${res.status} ${await res.text()}`)
@@ -157,7 +180,7 @@ async function chat(sessionId: string, message: string): Promise<{ response: str
 }
 
 async function fetchSummary() {
-  const res = await fetch(`${API_BASE}/api/context-summary`)
+  const res = await fetch(`${API_BASE}/api/context-summary`, { headers: SIM_HEADERS })
   return res.json() as Promise<{
     facts: { category: string; fact: string }[]
     timeline: { year: number; month: number | null; description: string }[]
@@ -177,8 +200,8 @@ const YELLOW = '\x1b[33m'
 const DIM = '\x1b[2m'
 
 const log = {
-  coach: (s: string) => console.log(`\n${CYAN}${B}[🤖 Coach]${R}\n${CYAN}${s}${R}`),
-  user:  (s: string) => console.log(`\n${GREEN}${B}[👤 User]${R}\n${GREEN}${s}${R}`),
+  coach: (s: string) => console.log(`\n${CYAN}${B}[Coach]${R}\n${CYAN}${s}${R}`),
+  user:  (s: string) => console.log(`\n${GREEN}${B}[User]${R}\n${GREEN}${s}${R}`),
   info:  (s: string) => console.log(`\n${YELLOW}${DIM}${s}${R}`),
   hr:    ()          => console.log(`\n${'─'.repeat(60)}`),
 }
@@ -187,12 +210,9 @@ const log = {
 // Main
 // ---------------------------------------------------------------------------
 
-async function main() {
-  log.info(`Mode: ${MODE}  |  Provider: ${PROVIDER}  |  Persona: ${PERSONA_DIR}`)
-
-  const persona = loadPersona()
-  const loaded = PERSONA_FILES.filter(f => existsSync(join(PERSONA_DIR, f)))
-  log.info(`Persona files: ${loaded.join(', ')}`)
+async function runSession(sessionNum: number, persona: string): Promise<void> {
+  log.hr()
+  log.info(`Session ${sessionNum} / ${SESSION_COUNT}`)
 
   const session = await startSession(MODE)
   log.coach(session.message)
@@ -215,15 +235,34 @@ async function main() {
     if (result.shouldEnd) break
   }
 
-  if (turns >= MAX_TURNS) log.info('Max turns reached.')
+  if (turns >= MAX_TURNS) log.info(`Max turns (${MAX_TURNS}) reached.`)
+}
 
-  log.info('Fetching extracted context...')
-  if (MODE === 'regular') await new Promise(r => setTimeout(r, 3000))
+async function main() {
+  const personaProvider = PROVIDER === 'claude' ? 'claude CLI' : `deepseek (${SIMULATE_LLM_MODEL})`
+  log.info(`Mode: ${MODE}  |  Sessions: ${SESSION_COUNT}  |  Max turns/session: ${MAX_TURNS}`)
+  log.info(`Persona (user side): ${personaProvider}`)
+  log.info(`Server (coach side): ${SERVER_PROVIDER} / ${SERVER_MODEL}`)
+  log.info(`Persona dir: ${PERSONA_DIR}`)
+
+  const persona = loadPersona()
+  const loaded = PERSONA_FILES.filter(f => existsSync(join(PERSONA_DIR, f)))
+  log.info(`Persona files: ${loaded.join(', ')}`)
+
+  log.info('Resetting simulate DB...')
+  await resetSimulate()
+
+  for (let i = 1; i <= SESSION_COUNT; i++) {
+    await runSession(i, persona)
+  }
+
+  log.info('All sessions complete. Fetching extracted context...')
+  await new Promise(r => setTimeout(r, 2000))
 
   const summary = await fetchSummary()
 
   log.hr()
-  console.log(`${B}EXTRACTED CONTEXT SUMMARY${R}`)
+  console.log(`${B}EXTRACTED CONTEXT SUMMARY (${SESSION_COUNT} sessions)${R}`)
   log.hr()
 
   if (summary.timeline.length > 0) {

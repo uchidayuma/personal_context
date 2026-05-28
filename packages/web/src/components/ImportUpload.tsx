@@ -127,17 +127,23 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
           )}
         </div>
 
-        {/* A: Context layer progress */}
-        {/* TODO: L1〜L10ラベルは初見ユーザーに伝わらない。コンセプト画像またはインライン説明を追加する。参照: TODO.md */}
         {preview && preview.layers.length > 0 && (
           <div className={styles.layersSection}>
             <div className={styles.layersSectionTitle}>🧠 コンテキスト完成度</div>
+            <p className={styles.layersSectionDesc}>
+              あなたの人生を10のレイヤーに分けて蓄積します。インタビューを重ねるほど精度が上がります。
+            </p>
             {(['CORE', 'SHAPE', 'STATE'] as const).map(zone => {
               const zoneLayers = preview.layers.filter(l => l.zone === zone)
               if (zoneLayers.length === 0) return null
+              const zoneDesc = {
+                CORE: '変わらない核　— 価値観・気質',
+                SHAPE: '形成されたもの　— 経験・スキル・関係性',
+                STATE: '今この瞬間　— 目標・好み',
+              }[zone]
               return (
                 <div key={zone} className={styles.layerZone}>
-                  <div className={styles.layerZoneLabel}>{zone}</div>
+                  <div className={styles.layerZoneLabel}>{zone} <span className={styles.layerZoneDesc}>{zoneDesc}</span></div>
                   {zoneLayers.map(layer => (
                     <div key={layer.id} className={styles.layerRow}>
                       <span className={styles.layerId}>{layer.id}</span>

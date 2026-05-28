@@ -1,4 +1,4 @@
-import { db } from './client.js'
+import type { Db } from '../types.js'
 import { questions, questionTranslations } from './schema.js'
 
 const SEED_QUESTIONS = [
@@ -101,9 +101,9 @@ const EN_TRANSLATIONS: { questionId: string; content: string }[] = [
   { questionId: 'q41', content: 'What environment, time of day, or situation helps you concentrate best?' },
 ]
 
-export async function seedQuestions() {
-  await db.insert(questions).values(SEED_QUESTIONS).onConflictDoNothing()
-  await db.insert(questionTranslations).values(
+export async function seedQuestions(targetDb: Db) {
+  await targetDb.insert(questions).values(SEED_QUESTIONS).onConflictDoNothing()
+  await targetDb.insert(questionTranslations).values(
     EN_TRANSLATIONS.map(t => ({ ...t, language: 'en' }))
   ).onConflictDoNothing()
 }

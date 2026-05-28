@@ -1,12 +1,12 @@
 import { Hono } from 'hono'
 import { startSession, startOnboarding } from '../interview/engine.js'
-import { DEFAULT_USER_ID } from '../db/client.js'
+import type { AppVariables } from '../types.js'
 
-export const sessionsRoute = new Hono()
+export const sessionsRoute = new Hono<{ Variables: AppVariables }>()
 
 sessionsRoute.post('/', async (c) => {
   try {
-    const { sessionId, message } = await startSession(DEFAULT_USER_ID)
+    const { sessionId, message } = await startSession(c.get('db'), c.get('userId'))
     return c.json({ sessionId, message })
   } catch (err) {
     console.error(err)
@@ -16,7 +16,7 @@ sessionsRoute.post('/', async (c) => {
 
 sessionsRoute.post('/onboarding', async (c) => {
   try {
-    const { sessionId, message } = await startOnboarding(DEFAULT_USER_ID)
+    const { sessionId, message } = await startOnboarding(c.get('db'), c.get('userId'))
     return c.json({ sessionId, message })
   } catch (err) {
     console.error(err)

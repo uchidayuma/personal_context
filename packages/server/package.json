@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "tsup src/index.ts --format esm",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "dev:stable": "tsx src/index.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",

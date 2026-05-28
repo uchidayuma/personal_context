@@ -1,15 +1,14 @@
 import { Hono } from 'hono'
 import { count, and, eq, inArray } from 'drizzle-orm'
-import { db, DEFAULT_USER_ID } from '../db/client.js'
+import type { Db } from '../types.js'
 import * as schema from '../db/schema.js'
+import type { AppVariables } from '../types.js'
 
 const { structuredFacts, lifeTimeline, professionalRecords, sessionVignettes } = schema
 
-export const progressRoute = new Hono()
+export const progressRoute = new Hono<{ Variables: AppVariables }>()
 
-const userId = DEFAULT_USER_ID
-
-const LAYER_DEFINITIONS = [
+function buildLayerDefinitions(db: Db, userId: string) { return [
   {
     id: 'L1',
     name: '価値観・信念',
@@ -36,12 +35,12 @@ const LAYER_DEFINITIONS = [
     id: 'L3',
     name: '人生年表',
     zone: 'SHAPE' as const,
-    // TODO: threshold:10 は職務経歴書インポートだけで超えてしまう。
-    // 人生年表は幼少期〜現在まで網羅するものなのでthreshold引き上げ or source別カウントを検討。
-    // 参照: TODO.md「L3 人生年表バーが職務経歴書だけで満杯になる問題」
-    threshold: 10,
+    threshold: 8,
     query: () => db.select({ count: count() }).from(lifeTimeline)
-      .where(eq(lifeTimeline.userId, userId)),
+      .where(and(
+        eq(lifeTimeline.userId, userId),
+        eq(lifeTimeline.source, 'interview'),
+      )),
   },
   {
     id: 'L4',
@@ -117,9 +116,12 @@ const LAYER_DEFINITIONS = [
         inArray(structuredFacts.category, ['preferences']),
       )),
   },
-]
+] }
 
 progressRoute.get('/', async (c) => {
+  const db = c.get('db')
+  const userId = c.get('userId')
+  const LAYER_DEFINITIONS = buildLayerDefinitions(db, userId)
   try {
     const [layerResults, factsTotal, timelineTotal, professionalTotal, vignetteTotal] =
       await Promise.all([
