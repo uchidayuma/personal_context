@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.*
+data/*.db
+data/*.db-shm
+data/*.db-wal
+models/
+*.tsbuildinfo
+.claude/settings.local.json
+.claude/agent-memory/

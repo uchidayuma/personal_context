@@ -1,0 +1,150 @@
+import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useVoiceInput } from '../hooks/useVoiceInput.js'
+import VoiceMode from './VoiceMode.js'
+import styles from './Chat.module.css'
+
+type Message = { role: 'assistant' | 'user'; content: string }
+
+export default function Chat() {
+  const { t, i18n } = useTranslation()
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [ended, setEnded] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const voice = useVoiceInput((text) => setInput(text))
+
+  useEffect(() => { startSession() }, [])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  async function startSession() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/sessions', { method: 'POST' })
+      const data = await res.json() as { sessionId: string; message: string }
+      setSessionId(data.sessionId)
+      setMessages([{ role: 'assistant', content: data.message }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function sendMessage() {
+    if (!input.trim() || !sessionId || loading || ended) return
+    const userMessage = input.trim()
+    setInput('')
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setLoading(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, message: userMessage }),
+      })
+      const data = await res.json() as { response: string; shouldEnd: boolean }
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      if (data.shouldEnd) setEnded(true)
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const lastCoachMessage = [...messages].reverse().find(m => m.role === 'assistant')?.content ?? ''
+
+  return (
+    <div className={styles.container}>
+      {voiceMode && sessionId && (
+        <VoiceMode
+          sessionId={sessionId}
+          language={i18n.language}
+          initialCoachMessage={lastCoachMessage}
+          ended={ended}
+          onClose={() => setVoiceMode(false)}
+          onExchange={(userMsg, coachMsg) => {
+            setMessages(prev => [
+              ...prev,
+              { role: 'user', content: userMsg },
+              { role: 'assistant', content: coachMsg },
+            ])
+          }}
+          onEnd={() => setEnded(true)}
+        />
+      )}
+      <div className={styles.messages}>
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`${styles.messageRow} ${msg.role === 'user' ? styles.messageRowUser : styles.messageRowAssistant}`}
+          >
+            <div className={`${styles.bubble} ${msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant}`}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className={styles.messageRowAssistant}>
+            <div className={styles.typing}>{t('chat.typing')}</div>
+          </div>
+        )}
+        {ended && (
+          <div className={styles.sessionEndedBar}>
+            {t('chat.sessionEnded')}
+            <button
+              className={styles.newSessionBtn}
+              onClick={() => { setEnded(false); setMessages([]); setSessionId(null); startSession() }}
+            >
+              {t('chat.newSession')}
+            </button>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      <div className={styles.inputArea}>
+        {voice.error && <div className={styles.errorMsg}>{voice.error}</div>}
+        <div className={styles.inputRow}>
+          {sessionId && !ended && (
+            <button
+              onClick={() => setVoiceMode(true)}
+              title="音声対話モード"
+              className={styles.voiceModeBtn}
+            >
+              🎧
+            </button>
+          )}
+          {voice.isSupported && (
+            <button
+              onClick={() => voice.isRecording ? voice.stop() : voice.start(i18n.language)}
+              disabled={loading || ended || voice.isTranscribing}
+              title={voice.isRecording ? '録音停止' : voice.isTranscribing ? '変換中...' : '音声入力'}
+              className={`${styles.micBtn} ${voice.isRecording ? styles.micBtnRecording : ''}`}
+            >
+              {voice.isTranscribing ? '⏳' : voice.isRecording ? '⏹' : '🎤'}
+            </button>
+          )}
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendMessage() } }}
+            disabled={loading || ended}
+            placeholder={ended ? t('chat.placeholderEnded') : t('chat.placeholder')}
+            rows={2}
+            className={styles.textarea}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={loading || ended || !input.trim()}
+            className={styles.sendBtn}
+          >
+            {t('chat.send')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

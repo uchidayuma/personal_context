@@ -1,0 +1,582 @@
+openapi: 3.1.0
+info:
+  title: Personal Context API
+  description: |
+    ローカルで動作するパーソナルコンテキスト管理APIです。
+    インタビューセッションの管理、コンテキストの抽出・エクスポート、
+    ドキュメントのインポートなどの機能を提供します。
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:3001
+    description: ローカル開発サーバー
+
+tags:
+  - name: sessions
+    description: インタビューセッションの開始
+  - name: chat
+    description: セッション内のメッセージ送受信
+  - name: user
+    description: ユーザー設定の取得・更新
+  - name: import
+    description: ドキュメントのインポート（L3・L4・facts の一括投入）
+  - name: export
+    description: コンテキストのMarkdownエクスポート
+  - name: context-summary
+    description: 抽出済みコンテキストの取得
+  - name: transcribe
+    description: 音声のテキスト変換
+  - name: progress
+    description: L1-L10レイヤーごとの充足度
+  - name: insights
+    description: 現在のコンテキストに基づくAIコメント
+
+paths:
+  /api/sessions:
+    post:
+      tags: [sessions]
+      summary: 通常インタビューセッションを開始
+      description: 新しい通常（regular）セッションを作成し、最初のコーチメッセージを返します。
+      responses:
+        '200':
+          description: セッション開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStart'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/sessions/onboarding:
+    post:
+      tags: [sessions]
+      summary: オンボーディングセッションを開始
+      description: |
+        新しいオンボーディング（初回）セッションを作成します。
+        完了時にコンテキスト抽出が同期的に実行されます。
+      responses:
+        '200':
+          description: オンボーディングセッション開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStart'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/chat:
+    post:
+      tags: [chat]
+      summary: メッセージを送信してコーチの返答を受け取る
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, message]
+              properties:
+                sessionId:
+                  type: string
+                  description: 開始済みセッションのID
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                message:
+                  type: string
+                  description: ユーザーの発言
+                  example: "子供の頃は長野の田舎で育ちました"
+      responses:
+        '200':
+          description: コーチの返答
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: sessionId または message が未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/user:
+    get:
+      tags: [user]
+      summary: ユーザー情報を取得
+      description: 現在のユーザー（local_default_user）の設定情報を返します。
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    patch:
+      tags: [user]
+      summary: ユーザー設定を更新
+      description: 言語設定などを更新します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  enum: [ja, en]
+                  description: UIの言語設定
+                  example: "ja"
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+
+  /api/import:
+    post:
+      tags: [import]
+      summary: ドキュメントをインポートしてコンテキストに投入
+      description: |
+        PDF・Excel・CSV・TXTファイルをアップロードし、LLMで解析して
+        以下のテーブルに保存します：
+        - `life_timeline`（L3: 人生年表）
+        - `professional_records`（L4: 職務詳細）
+        - `structured_facts`（スキル・資格などの事実）
+
+        ファイルサイズ上限: 5MB
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: アップロードするファイル（PDF / XLSX / XLS / CSV / TXT / MD）
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: ファイル未指定・非対応形式・サイズ超過・テキスト抽出失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                noFile:
+                  summary: ファイル未指定
+                  value: { error: "no file provided" }
+                tooLarge:
+                  summary: サイズ超過
+                  value: { error: "file too large (max 5MB)" }
+                unsupported:
+                  summary: 非対応形式
+                  value: { error: "unsupported file type: .docx" }
+                noText:
+                  summary: テキスト抽出失敗
+                  value: { error: "no text could be extracted from this file" }
+
+  /api/export:
+    get:
+      tags: [export]
+      summary: コンテキストをMarkdown形式でエクスポート
+      parameters:
+        - name: visibility
+          in: query
+          description: |
+            `all` を指定するとprivateデータを含む全件を返します。
+            省略または`public`の場合はpublicデータのみを返します。
+          schema:
+            type: string
+            enum: [public, all]
+            default: public
+          example: all
+      responses:
+        '200':
+          description: Markdownファイル群
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportFiles'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/context-summary:
+    get:
+      tags: [context-summary]
+      summary: 抽出済みコンテキストのサマリーを取得
+      description: |
+        オンボーディング完了後のプレビュー表示などに使用します。
+        facts（最新8件）・timeline（全件）・vignette（最新1件）を返します。
+      responses:
+        '200':
+          description: コンテキストサマリー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextSummary'
+
+  /api/progress:
+    get:
+      tags: [progress]
+      summary: L1-L10レイヤーごとの充足度を取得
+      description: |
+        各レイヤーのデータ件数と充足度（0-100%）を返します。
+        ダッシュボード表示などに使用します。
+      responses:
+        '200':
+          description: 充足度データ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/transcribe:
+    post:
+      tags: [transcribe]
+      summary: 音声をテキストに変換（Groq Whisper）
+      description: |
+        録音した音声データをGroq Whisper（whisper-large-v3-turbo）でテキスト変換します。
+        GROQ_API_KEY の設定が必要です。
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: 音声ファイル（MediaRecorderで録音したWebMなど）
+                lang:
+                  type: string
+                  description: 言語コード（省略時は`ja`）
+                  default: ja
+                  example: ja
+      responses:
+        '200':
+          description: 変換成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                    description: 変換されたテキスト
+                    example: "子供の頃から音楽が好きでした"
+        '400':
+          description: audioフィールドが未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: GROQ_API_KEY が未設定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/insights:
+    get:
+      tags: [insights]
+      summary: 現在のコンテキストに基づくAIコメントを生成
+      description: |
+        DBに蓄積されたfacts・timelineを読み込み、LLMで2〜3文の人物洞察コメントを生成します。
+        インポート後プレビュー画面での表示に使用します。データが空の場合は`comment: null`を返します。
+      responses:
+        '200':
+          description: 生成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment:
+                    type: string
+                    nullable: true
+                    description: AIが生成した人物洞察コメント（データ不足時はnull）
+                    example: "エンジニアからPM、そして独立へ——役割の枠を越えて動いてきた軌跡が見えます。技術と経営の両側に立てる動き方が一貫しているようです。"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    SessionStart:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: セッションID（以降のchat APIで使用）
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        message:
+          type: string
+          description: コーチの最初のメッセージ
+          example: "はじめまして。今日はあなたのことを少し教えてください。まず、最近印象に残っている出来事を一つ話してもらえますか？"
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: コーチの返答メッセージ
+          example: "長野で育ったんですね。子供の頃はどんな遊びをしていましたか？"
+        shouldEnd:
+          type: boolean
+          description: |
+            `true` の場合、セッションを終了してください。
+            オンボーディングの場合、このタイミングでコンテキスト抽出が完了しています。
+          example: false
+
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          example: "Local User"
+        language:
+          type: string
+          enum: [ja, en]
+          example: "ja"
+        onboardingCompletedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: オンボーディング完了日時。nullの場合は未完了。
+          example: "2026-05-23T10:30:00"
+
+    ImportResult:
+      type: object
+      properties:
+        imported:
+          type: object
+          description: 保存されたレコード数
+          properties:
+            timeline:
+              type: integer
+              description: life_timelineに追加されたイベント数
+              example: 8
+            professional:
+              type: integer
+              description: professional_recordsに追加された職務数
+              example: 3
+            facts:
+              type: integer
+              description: structured_factsに追加された事実数
+              example: 12
+        preview:
+          type: object
+          description: 抽出内容のプレビュー（最大5件ずつ）
+          properties:
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                    example: 2019
+                  month:
+                    type: integer
+                    nullable: true
+                    example: 4
+                  description:
+                    type: string
+                    example: "○○株式会社に入社"
+            professional:
+              type: array
+              items:
+                type: object
+                properties:
+                  companyName:
+                    type: string
+                    example: "○○株式会社"
+                  role:
+                    type: string
+                    nullable: true
+                    example: "フロントエンドエンジニア"
+                  startYear:
+                    type: integer
+                    example: 2019
+                  endYear:
+                    type: integer
+                    nullable: true
+                    example: 2022
+            facts:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: "スキル"
+                  fact:
+                    type: string
+                    example: "TypeScript 5年以上の経験"
+
+    ExportFiles:
+      type: object
+      properties:
+        files:
+          type: object
+          properties:
+            index:
+              type: string
+              description: _index.md のMarkdownテキスト
+            lifeChapters:
+              type: string
+              description: life_chapters.md のMarkdownテキスト
+            currentContext:
+              type: string
+              description: current_context.md のMarkdownテキスト
+            identityProfile:
+              type: string
+              description: identity_profile.md のMarkdownテキスト
+
+    ProgressResponse:
+      type: object
+      properties:
+        overall:
+          type: number
+          description: 全体充足度 0-100（全レイヤーの percent の平均）
+          example: 42.5
+        layers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: レイヤーID
+                example: "L1"
+              name:
+                type: string
+                description: 日本語レイヤー名
+                example: "価値観・信念"
+              zone:
+                type: string
+                enum: [CORE, SHAPE, STATE]
+                description: レイヤーのゾーン分類
+                example: "CORE"
+              percent:
+                type: number
+                description: 充足度 0-100
+                example: 60.0
+              count:
+                type: integer
+                description: 実件数
+                example: 3
+              threshold:
+                type: integer
+                description: 完了とみなす件数
+                example: 5
+        totals:
+          type: object
+          properties:
+            facts:
+              type: integer
+              description: structured_facts の総件数
+              example: 24
+            timeline:
+              type: integer
+              description: life_timeline の総件数
+              example: 12
+            professional:
+              type: integer
+              description: professional_records の総件数
+              example: 4
+            vignettes:
+              type: integer
+              description: session_vignettes の総件数
+              example: 7
+
+    ContextSummary:
+      type: object
+      properties:
+        facts:
+          type: array
+          description: 構造化ファクト（最新8件）
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                example: "career"
+              fact:
+                type: string
+                example: "フロントエンドエンジニアとして5年以上の経験を持つ"
+        timeline:
+          type: array
+          description: 人生年表（全件・昇順）
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+                example: 2015
+              month:
+                type: integer
+                nullable: true
+                example: 4
+              description:
+                type: string
+                example: "大学卒業・就職"
+        vignette:
+          nullable: true
+          description: 最新のヴィネット（なければnull）
+          allOf:
+            - $ref: '#/components/schemas/Vignette'
+
+    Vignette:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "プロジェクトを途中で降りた日"
+        quote:
+          type: string
+          example: "これ以上続けても誰も幸せにならないと思って"
+        scene:
+          type: string
+          example: "大規模プロジェクトのPMとして働く中で、チームメンバーへの負荷が限界に達していると感じた..."
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "sessionId and message are required"
+
+  responses:
+    InternalError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Failed to process message"

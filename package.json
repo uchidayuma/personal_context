@@ -1,0 +1,19 @@
+{
+  "name": "personal-context",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "audit": "pnpm audit --audit-level=moderate",
+    "simulate": "tsx scripts/simulate-interview.ts",
+    "reset-db": "docker compose stop server 2>/dev/null; rm -f data/personal_context.db data/personal_context.db-wal data/personal_context.db-shm && docker compose start server 2>/dev/null && echo 'DB reset complete' || echo 'DB deleted. Restart server manually if not using Docker.'"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0 <11.0.0"
+  }
+}

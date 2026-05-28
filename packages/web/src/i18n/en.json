@@ -1,0 +1,28 @@
+{
+  "app": {
+    "title": "Personal Context",
+    "nav": {
+      "interview": "Interview",
+      "exportPublic": "Export (Public)",
+      "exportAll": "Export (All)"
+    }
+  },
+  "chat": {
+    "placeholder": "Type a message (Ctrl+Enter to send)",
+    "placeholderEnded": "Session ended",
+    "send": "Send",
+    "typing": "Typing...",
+    "sessionEnded": "The session has ended.",
+    "newSession": "Start a new session"
+  },
+  "export": {
+    "copy": "Copy to clipboard"
+  },
+  "onboarding": {
+    "title": "Getting Started: Build Your Life Skeleton",
+    "description": "Just once, tell us about the turning points in your life. In about 5 minutes, you'll have the foundation of your personal context.",
+    "start": "Get Started",
+    "completed": "Onboarding complete. Let's start your regular interviews.",
+    "toInterview": "Go to Interview"
+  }
+}

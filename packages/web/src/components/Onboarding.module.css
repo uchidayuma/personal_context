@@ -1,0 +1,273 @@
+.splash {
+  max-width: 560px;
+  width: 100%;
+  margin: 80px auto;
+  text-align: center;
+  padding: 0 24px;
+}
+.splashIcon {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+.splashTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+}
+.splashDesc {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 40px;
+}
+.startBtn {
+  padding: 14px 48px;
+  border-radius: 12px;
+  border: none;
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Chat area (same layout as Chat.tsx) */
+.container {
+  max-width: 680px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+}
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.messageRow {
+  display: flex;
+}
+.messageRowUser {
+  justify-content: flex-end;
+}
+.messageRowAssistant {
+  justify-content: flex-start;
+}
+.bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  line-height: 1.6;
+  font-size: 15px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  white-space: pre-wrap;
+}
+.bubbleUser {
+  background: #1a1a2e;
+  color: #fff;
+}
+.bubbleAssistant {
+  background: #fff;
+  color: #222;
+}
+.typing {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fff;
+  color: #999;
+  font-size: 15px;
+}
+
+.sessionEndedBar {
+  text-align: center;
+  padding: 24px;
+  color: #555;
+  font-size: 15px;
+}
+.completedText {
+  margin-bottom: 16px;
+}
+.toInterviewBtn {
+  padding: 10px 32px;
+  border-radius: 10px;
+  border: none;
+  background: #e94560;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Input area */
+.inputArea {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+}
+.errorMsg {
+  font-size: 12px;
+  color: #e74c3c;
+  padding-left: 4px;
+}
+.inputRow {
+  display: flex;
+  gap: 8px;
+}
+.micBtn {
+  width: 44px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  background: rgba(26, 26, 46, 0.08);
+}
+.micBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.micBtnRecording {
+  background: #e74c3c;
+  animation: micPulse 1s ease-in-out infinite;
+}
+.textarea {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+}
+.sendBtn {
+  padding: 0 20px;
+  border-radius: 12px;
+  border: none;
+  background: #1a1a2e;
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+}
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Context preview */
+.preview {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 40px;
+}
+.previewHeading {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.previewSubheading {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.previewCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+.previewCardTitle {
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  letter-spacing: 0.04em;
+}
+.previewCardBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.timelineRow {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.timelineYear {
+  font-weight: 700;
+  color: #1a1a2e;
+  min-width: 40px;
+  flex-shrink: 0;
+}
+.timelineDesc {
+  color: #444;
+}
+.factRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.factCategory {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: #e94560;
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.factText {
+  color: #444;
+}
+.vignetteQuote {
+  font-size: 15px;
+  color: #1a1a2e;
+  font-style: italic;
+  line-height: 1.7;
+  border-left: 3px solid #e94560;
+  padding-left: 14px;
+  margin-bottom: 10px;
+}
+.vignetteScene {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.7;
+}
+.previewLoading {
+  text-align: center;
+  padding: 60px 0;
+  color: #888;
+  font-size: 15px;
+}
+.previewActions {
+  text-align: center;
+  padding-top: 8px;
+}
+.toInterviewLarge {
+  padding: 14px 56px;
+  border-radius: 12px;
+  border: none;
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}

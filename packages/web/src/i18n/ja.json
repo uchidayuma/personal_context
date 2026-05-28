@@ -1,0 +1,28 @@
+{
+  "app": {
+    "title": "自分コンテキスト",
+    "nav": {
+      "interview": "インタビュー",
+      "exportPublic": "エクスポート（公開）",
+      "exportAll": "エクスポート（全て）"
+    }
+  },
+  "chat": {
+    "placeholder": "メッセージを入力（Cmd+Enter で送信）",
+    "placeholderEnded": "セッション終了",
+    "send": "送信",
+    "typing": "入力中...",
+    "sessionEnded": "セッションが終了しました。",
+    "newSession": "新しいセッションを開始"
+  },
+  "export": {
+    "copy": "クリップボードにコピー"
+  },
+  "onboarding": {
+    "title": "はじめに：人生の骨格を作りましょう",
+    "description": "最初に一度だけ、あなたの人生の転機を話してもらいます。5分ほどで、コンテキストの骨格が完成します。",
+    "start": "はじめる",
+    "completed": "オンボーディング完了。日常のインタビューを始めましょう。",
+    "toInterview": "インタビューへ"
+  }
+}
