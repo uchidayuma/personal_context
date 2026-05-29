@@ -30,8 +30,8 @@ import { spawnSync } from 'child_process'
 loadEnv(join(process.cwd(), '.env'))
 
 const args = process.argv.slice(2)
-const MODE = (['onboarding', 'regular'].includes(args[0]) ? args[0] : 'onboarding') as 'onboarding' | 'regular'
 const PROVIDER: 'claude' | 'deepseek' = args.includes('--deepseek') ? 'deepseek' : 'claude'
+const RESET_ONLY = args.includes('--reset-only')
 
 const turnsArg = args.indexOf('--turns')
 const MAX_TURNS = turnsArg >= 0 ? parseInt(args[turnsArg + 1] ?? '20', 10) : 20
@@ -39,7 +39,7 @@ const MAX_TURNS = turnsArg >= 0 ? parseInt(args[turnsArg + 1] ?? '20', 10) : 20
 const sessionsArg = args.indexOf('--sessions')
 const SESSION_COUNT = sessionsArg >= 0 ? parseInt(args[sessionsArg + 1] ?? '3', 10) : 3
 
-const PERSONA_DIR = args.find(a => !a.startsWith('--') && a !== MODE && !/^\d+$/.test(a))
+const PERSONA_DIR = args.find(a => !a.startsWith('--') && !['onboarding', 'regular'].includes(a) && !/^\d+$/.test(a))
   ?? join(homedir(), 'Dropbox/obsidian/escapejapan/input/context')
 
 const API_BASE = process.env.API_BASE ?? 'http://localhost:3001'
@@ -188,6 +188,14 @@ async function fetchSummary() {
   }>
 }
 
+async function hasSimulateData(): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/api/progress`, { headers: SIM_HEADERS })
+  if (!res.ok) return false
+  const data = await res.json() as { totals: { facts: number; timeline: number; professional: number; vignettes: number } }
+  const { facts, timeline, professional, vignettes } = data.totals
+  return facts + timeline + professional + vignettes > 0
+}
+
 // ---------------------------------------------------------------------------
 // Terminal helpers
 // ---------------------------------------------------------------------------
@@ -210,11 +218,12 @@ const log = {
 // Main
 // ---------------------------------------------------------------------------
 
-async function runSession(sessionNum: number, persona: string): Promise<void> {
+async function runSession(sessionNum: number, persona: string, firstMode: 'onboarding' | 'regular'): Promise<void> {
   log.hr()
-  log.info(`Session ${sessionNum} / ${SESSION_COUNT}`)
+  const sessionMode = sessionNum === 1 ? firstMode : 'regular'
+  log.info(`Session ${sessionNum} / ${SESSION_COUNT}  [${sessionMode}]`)
 
-  const session = await startSession(MODE)
+  const session = await startSession(sessionMode)
   log.coach(session.message)
 
   const history: Turn[] = []
@@ -239,8 +248,15 @@ async function runSession(sessionNum: number, persona: string): Promise<void> {
 }
 
 async function main() {
+  if (RESET_ONLY) {
+    log.info('Resetting simulate DB...')
+    await resetSimulate()
+    log.info('Done.')
+    return
+  }
+
   const personaProvider = PROVIDER === 'claude' ? 'claude CLI' : `deepseek (${SIMULATE_LLM_MODEL})`
-  log.info(`Mode: ${MODE}  |  Sessions: ${SESSION_COUNT}  |  Max turns/session: ${MAX_TURNS}`)
+  log.info(`Sessions: ${SESSION_COUNT}  |  Max turns/session: ${MAX_TURNS}`)
   log.info(`Persona (user side): ${personaProvider}`)
   log.info(`Server (coach side): ${SERVER_PROVIDER} / ${SERVER_MODEL}`)
   log.info(`Persona dir: ${PERSONA_DIR}`)
@@ -249,11 +265,12 @@ async function main() {
   const loaded = PERSONA_FILES.filter(f => existsSync(join(PERSONA_DIR, f)))
   log.info(`Persona files: ${loaded.join(', ')}`)
 
-  log.info('Resetting simulate DB...')
-  await resetSimulate()
+  const hasData = await hasSimulateData()
+  const firstMode: 'onboarding' | 'regular' = hasData ? 'regular' : 'onboarding'
+  log.info(`Simulate DB: ${hasData ? 'has existing data → all sessions=regular' : 'empty → session1=onboarding, 2+=regular'}`)
 
   for (let i = 1; i <= SESSION_COUNT; i++) {
-    await runSession(i, persona)
+    await runSession(i, persona, firstMode)
   }
 
   log.info('All sessions complete. Fetching extracted context...')

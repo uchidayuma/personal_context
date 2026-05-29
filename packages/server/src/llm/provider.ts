@@ -74,17 +74,62 @@ const InterviewResponseSchema = z.object({
 
 export type InterviewResponse = z.infer<typeof InterviewResponseSchema>
 
+// DeepSeek sometimes encodes boolean fields as DSML tags instead of JSON.
+// Pattern: </string>\n<｜｜DSML｜｜parameter name="askedFollowup" string="false">false
+function recoverFromDSML(partial: unknown): InterviewResponse | null {
+  if (!partial || typeof partial !== 'object') return null
+  const p = partial as Record<string, unknown>
+  if (typeof p.response !== 'string') return null
+
+  const splitAt = p.response.indexOf('</string>')
+  const cleanResponse = (splitAt >= 0 ? p.response.slice(0, splitAt) : p.response).trim()
+  if (!cleanResponse) return null
+
+  const dsmlTail = splitAt >= 0 ? p.response.slice(splitAt) : ''
+  const dsmlBooleans: Record<string, boolean> = {}
+  const dsmlRe = /<[^>]*parameter name="(\w+)" string="(true|false)">/g
+  let m: RegExpExecArray | null
+  while ((m = dsmlRe.exec(dsmlTail)) !== null) {
+    dsmlBooleans[m[1]] = m[2] === 'true'
+  }
+
+  return {
+    response: cleanResponse,
+    askedFollowup: typeof p.askedFollowup === 'boolean' ? p.askedFollowup : (dsmlBooleans.askedFollowup ?? false),
+    shouldEndSession: typeof p.shouldEndSession === 'boolean' ? p.shouldEndSession : (dsmlBooleans.shouldEndSession ?? false),
+  }
+}
+
 export async function generateInterviewResponse(
   systemPrompt: string,
   messages: { role: 'user' | 'assistant'; content: string }[],
 ): Promise<InterviewResponse> {
-  const { object } = await wrapStructuredOutputError(() => generateObject({
-    model: getLLM(),
-    schema: InterviewResponseSchema,
-    abortSignal: AbortSignal.timeout(60_000),
-    messages: [{ role: 'system', content: systemPrompt }, ...messages],
-  }))
-  return object
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { object } = await generateObject({
+        model: getLLM(),
+        schema: InterviewResponseSchema,
+        abortSignal: AbortSignal.timeout(60_000),
+        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      })
+      return object
+    } catch (err) {
+      if (!(err instanceof Error) || err.name !== 'AI_NoObjectGeneratedError') throw err
+      console.warn(`[LLM] generateInterviewResponse failed (attempt ${attempt}):`, JSON.stringify({
+        message: err.message,
+        cause: (err as any).cause,
+        text: (err as any).text,
+      }, null, 2))
+      const recovered = recoverFromDSML((err as any).cause?.value)
+      if (recovered) {
+        console.warn('[LLM] Recovered interview response from DSML output')
+        return recovered
+      }
+      if (attempt < 2) continue
+      throw new ModelStructuredOutputError(process.env.LLM_MODEL ?? '(default)')
+    }
+  }
+  throw new Error('unreachable')
 }
 
 export async function transformToCoachingTone(

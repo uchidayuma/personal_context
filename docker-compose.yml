@@ -17,6 +17,8 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      - DB_PATH=/app/data/personal_context.db
+      - SIMULATE_DB_PATH=/app/data/simulate.db
       # Set WATCH=true to enable hot-reload (may cause instability on macOS due to polling)
       # - WATCH=true
       # - CHOKIDAR_USEPOLLING=true
