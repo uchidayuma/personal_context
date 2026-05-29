@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm",
     "dev": "tsx watch src/index.ts",
-    "dev:stable": "tsx src/index.ts"
+    "dev:stable": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
@@ -23,8 +25,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "jest-openapi": "^0.14.2",
     "tsup": "^8.4.0",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

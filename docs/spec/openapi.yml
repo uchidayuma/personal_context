@@ -443,19 +443,56 @@ components:
       properties:
         files:
           type: object
+          required:
+            - index
+            - l01Values
+            - l02Character
+            - l03LifeTimeline
+            - l04Professional
+            - l05Relationships
+            - l06Opinions
+            - l09Goals
+            - l10Preferences
+            - lifeChapters
           properties:
             index:
               type: string
               description: _index.md のMarkdownテキスト
+            l01Values:
+              type: string
+              description: L01_values.md — 価値観・信念
+            l02Character:
+              type: string
+              description: L02_character.md — 気質・才能
+            l03LifeTimeline:
+              type: string
+              description: L03_life_timeline.md — 人生年表
+            l04Professional:
+              type: string
+              description: L04_professional.md — 職歴・スキル
+            l05Relationships:
+              type: string
+              description: L05_relationships.md — 人間関係
+            l06Opinions:
+              type: string
+              description: L06_opinions.md — 意見・スタンス
+            l07Fears:
+              type: string
+              nullable: true
+              description: L07_fears.md — 恐れ・回避（visibility=all のときのみ）
+            l08Patterns:
+              type: string
+              nullable: true
+              description: L08_patterns.md — 繰り返す癖（visibility=all のときのみ）
+            l09Goals:
+              type: string
+              description: L09_goals.md — 目標・方向感
+            l10Preferences:
+              type: string
+              description: L10_preferences.md — 好み・スタイル
             lifeChapters:
               type: string
-              description: life_chapters.md のMarkdownテキスト
-            currentContext:
-              type: string
-              description: current_context.md のMarkdownテキスト
-            identityProfile:
-              type: string
-              description: identity_profile.md のMarkdownテキスト
+              description: life_chapters.md — Vignettes（行動の証拠集）
 
     ProgressResponse:
       type: object

@@ -44,6 +44,33 @@
 - CLAUDE.md のドキュメント一覧に漏れがないか
 - リンクが正しいパスを指しているか
 
+### API変更時のルール
+
+**`packages/server/src/routes/` 以下のファイルを変更するときは、必ず `docs/spec/openapi.yml` も確認・更新すること。**
+
+具体的には：
+- レスポンスのフィールド追加・削除・型変更 → `openapi.yml` の対応スキーマを更新
+- 新しいエンドポイントの追加 → `openapi.yml` に `paths` エントリを追加
+- エラーレスポンスの変更 → `openapi.yml` のエラースキーマを更新
+
+実装と `openapi.yml` の乖離はテストで検出されるが、乖離を作らないことが原則。
+
+## 開発フロー（TDD）
+
+**設計書 → テスト → 実装 の順序を守る。**
+
+1. `docs/*` に設計書を書き、ユーザーに確認を取る
+2. 設計書に基づいてテストを先に書く（Red）
+3. テストが通るように実装する（Green）
+4. リファクタリング（Refactor）
+
+**新しいAPIエンドポイントを追加するとき：**
+1. `docs/spec/openapi.yml` にエンドポイントを定義
+2. `packages/server/src/routes/*.test.ts` にテストを書く
+3. `packages/server/src/routes/*.ts` に実装する
+
+テストは `jest-openapi` の `toSatisfyApiSpec()` を使い、openapi.yml との整合性を自動検証する。
+
 ## コマンドの実行
 
 シェルコマンドの実行はユーザーに任せる。  

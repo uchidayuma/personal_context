@@ -22,14 +22,33 @@ export default function VoiceMode({
   const [coachText, setCoachText] = useState(initialCoachMessage)
   const [userText, setUserText] = useState('')
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('')
+  const langCode = language === 'ja' ? 'ja-JP' : 'en-US'
+
+  useEffect(() => {
+    function loadVoices() {
+      const all = window.speechSynthesis.getVoices()
+      const filtered = all.filter(v => v.lang.startsWith(language === 'ja' ? 'ja' : 'en'))
+      setVoices(filtered)
+      if (filtered.length > 0 && !selectedVoiceName) {
+        setSelectedVoiceName(filtered[0].name)
+      }
+    }
+    loadVoices()
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
+  }, [language])
 
   function speak(text: string, onDone: () => void) {
     setPhase('speaking')
     const synth = window.speechSynthesis
     synth.cancel()
     const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = language === 'ja' ? 'ja-JP' : 'en-US'
-    utter.rate = 1.05
+    utter.lang = langCode
+    utter.rate = 1.1
+    const selectedVoice = voices.find(v => v.name === selectedVoiceName)
+    if (selectedVoice) utter.voice = selectedVoice
     utter.onend = onDone
     utter.onerror = () => onDone()
     synth.speak(utter)
@@ -96,6 +115,21 @@ export default function VoiceMode({
       >
         ✕ テキストモードに戻る
       </button>
+
+      {voices.length > 0 && (
+        <div className={styles.voiceSelector}>
+          <span className={styles.voiceSelectorLabel}>🔊</span>
+          <select
+            className={styles.voiceSelect}
+            value={selectedVoiceName}
+            onChange={e => setSelectedVoiceName(e.target.value)}
+          >
+            {voices.map(v => (
+              <option key={v.name} value={v.name}>{v.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className={styles.coachCard}>
         <div className={styles.coachLabel}>COACH</div>
