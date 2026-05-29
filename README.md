@@ -16,6 +16,14 @@ Answer a few interview questions each day. The engine quietly builds a structure
 
 ---
 
+## Live Demo
+
+**Try it without installing anything:** [personal-context.onrender.com](https://personal-context.onrender.com/)
+
+> Demo sessions are ephemeral — data is not persisted after you close the tab. Limited to 1 session per IP per day.
+
+---
+
 ## The Problem
 
 Every major LLM platform now has its own memory feature. But your context is trapped inside each one — you can't take your Claude memories to ChatGPT, or your ChatGPT history to Cursor.
