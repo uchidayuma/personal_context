@@ -12,6 +12,7 @@ export default defineConfig({
   },
   server: {
     host: true,  // Docker内で全インターフェースにバインド (0.0.0.0)
+    allowedHosts: 'all',  // Renderなど外部ホストからのアクセスを許可
     watch: {
       usePolling: true,  // macOS+Docker ではinotifyが届かないためpollingが必要
     },
