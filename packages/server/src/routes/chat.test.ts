@@ -3,7 +3,7 @@ import { chatRoute } from './chat.js'
 import { createMockDb, createTestApp, req } from '../test/helpers.js'
 
 vi.mock('../interview/engine.js', () => ({
-  processMessage: vi.fn().mockResolvedValue({ response: 'コーチの返答', shouldEnd: false }),
+  processMessage: vi.fn().mockResolvedValue({ response: 'コーチの返答', shouldEnd: false, remainingTurns: 2 }),
 }))
 
 vi.mock('../llm/provider.js', async (importOriginal) => {
@@ -18,7 +18,7 @@ describe('POST /api/chat', () => {
     app = createTestApp(chatRoute, '/api/chat', createMockDb())
   })
 
-  it('returns 200 with response and shouldEnd', async () => {
+  it('returns 200 with response, shouldEnd, and remainingTurns', async () => {
     const res = await req(app, 'POST', '/api/chat', {
       sessionId: 'sess-1',
       message: 'こんにちは',
@@ -27,7 +27,20 @@ describe('POST /api/chat', () => {
     expect(res.body).toMatchObject({
       response: expect.any(String),
       shouldEnd: expect.any(Boolean),
+      remainingTurns: expect.any(Number),
     })
+    expect(res).toSatisfyApiSpec()
+  })
+
+  it('returns 200 with remainingTurns null for onboarding', async () => {
+    const { processMessage } = await import('../interview/engine.js')
+    vi.mocked(processMessage).mockResolvedValueOnce({ response: 'コーチの返答', shouldEnd: false, remainingTurns: null })
+    const res = await req(app, 'POST', '/api/chat', {
+      sessionId: 'sess-onboarding',
+      message: 'はじめまして',
+    })
+    expect(res.status).toBe(200)
+    expect(res.body.remainingTurns).toBeNull()
     expect(res).toSatisfyApiSpec()
   })
 

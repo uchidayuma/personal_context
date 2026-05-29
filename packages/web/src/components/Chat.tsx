@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
 import VoiceMode from './VoiceMode.js'
+import ProgressHeader, { type ProgressData } from './ProgressHeader.js'
 import styles from './Chat.module.css'
 
 type Message = { role: 'assistant' | 'user'; content: string }
@@ -15,10 +16,19 @@ export default function Chat() {
   const [ended, setEnded] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
+  const [progress, setProgress] = useState<ProgressData | null>(null)
+  const [remainingTurns, setRemainingTurns] = useState<number | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const voice = useVoiceInput((text) => setInput(text))
 
-  useEffect(() => { startSession() }, [])
+  async function refreshProgress() {
+    try {
+      const res = await fetch('/api/progress')
+      if (res.ok) setProgress(await res.json() as ProgressData)
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => { startSession(); refreshProgress() }, [])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   async function startSession() {
@@ -45,7 +55,7 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, message: userMessage }),
       })
-      const data = await res.json() as { response?: string; shouldEnd?: boolean; error?: string; code?: string }
+      const data = await res.json() as { response?: string; shouldEnd?: boolean; remainingTurns?: number | null; error?: string; code?: string }
       if (!res.ok) {
         if (data.code === 'MODEL_NOT_SUPPORTED') {
           setModelError(data.error ?? 'Model does not support structured output.')
@@ -55,8 +65,38 @@ export default function Chat() {
       }
       setMessages(prev => [...prev, { role: 'assistant', content: data.response! }])
       if (data.shouldEnd) setEnded(true)
+      if (data.remainingTurns !== undefined) setRemainingTurns(data.remainingTurns)
+      refreshProgress()
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: '...' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function endSessionNow() {
+    if (!sessionId || ended) return
+    try {
+      await fetch(`/api/sessions/${sessionId}/end`, { method: 'POST' })
+    } catch (err) {
+      console.error('[end] failed:', err)
+      // サーバー側の失敗でもクライアントは終了状態にする（UIの整合性優先）
+    }
+    setEnded(true)
+    refreshProgress()
+  }
+
+  async function skipQuestion() {
+    if (!sessionId || ended) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/skip`, { method: 'POST' })
+      const data = await res.json() as { message: string; remainingTurns: number | null }
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+      if (data.remainingTurns !== undefined) setRemainingTurns(data.remainingTurns)
+    } catch (err) {
+      console.error('[skip] failed:', err)
+      // loading=false は finally で復帰するので、ユーザーはボタンを再試行できる
     } finally {
       setLoading(false)
     }
@@ -72,17 +112,19 @@ export default function Chat() {
           language={i18n.language}
           initialCoachMessage={lastCoachMessage}
           ended={ended}
-          onClose={() => setVoiceMode(false)}
+          onClose={() => { setVoiceMode(false); refreshProgress() }}
           onExchange={(userMsg, coachMsg) => {
             setMessages(prev => [
               ...prev,
               { role: 'user', content: userMsg },
               { role: 'assistant', content: coachMsg },
             ])
+            refreshProgress()
           }}
           onEnd={() => setEnded(true)}
         />
       )}
+      <ProgressHeader data={progress} remainingTurns={remainingTurns} />
       <div className={styles.messages}>
         {messages.map((msg, i) => (
           <div
@@ -99,12 +141,19 @@ export default function Chat() {
             <div className={styles.typing}>{t('chat.typing')}</div>
           </div>
         )}
+        {!ended && !loading && messages.length >= 1 && sessionId && (
+          <div className={styles.skipRow}>
+            <button className={styles.skipBtn} onClick={skipQuestion}>
+              {t('chat.skip')}
+            </button>
+          </div>
+        )}
         {ended && (
           <div className={styles.sessionEndedBar}>
             {t('chat.sessionEnded')}
             <button
               className={styles.newSessionBtn}
-              onClick={() => { setEnded(false); setMessages([]); setSessionId(null); startSession() }}
+              onClick={() => { setEnded(false); setMessages([]); setSessionId(null); setRemainingTurns(null); startSession() }}
             >
               {t('chat.newSession')}
             </button>
@@ -122,6 +171,15 @@ export default function Chat() {
         )}
         {voice.error && <div className={styles.errorMsg}>{voice.error}</div>}
         <div className={styles.inputRow}>
+          {sessionId && !ended && (
+            <button
+              onClick={endSessionNow}
+              title={t('chat.endSession')}
+              className={styles.endBtn}
+            >
+              {t('chat.endSession')}
+            </button>
+          )}
           {sessionId && !ended && (
             <button
               onClick={() => setVoiceMode(true)}

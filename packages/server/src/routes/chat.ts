@@ -13,13 +13,13 @@ chatRoute.post('/', async (c) => {
   }
 
   try {
-    const { response, shouldEnd } = await processMessage(
+    const { response, shouldEnd, remainingTurns } = await processMessage(
       c.get('db'),
       body.sessionId,
       c.get('userId'),
       body.message.trim(),
     )
-    return c.json({ response, shouldEnd })
+    return c.json({ response, shouldEnd, remainingTurns })
   } catch (err) {
     console.error('[chat] error:', err)
     if (err instanceof ModelStructuredOutputError) {

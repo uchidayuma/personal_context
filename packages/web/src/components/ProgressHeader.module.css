@@ -1,0 +1,170 @@
+.panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+  margin-bottom: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── Summary row ── */
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  white-space: nowrap;
+}
+
+.barWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar {
+  flex: 1;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #e94560;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e94560;
+  min-width: 36px;
+  text-align: right;
+}
+
+.remaining {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  white-space: nowrap;
+}
+
+.toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #aaa;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+/* ── Dots row ── */
+.dots {
+  display: flex;
+  gap: 4px;
+  padding: 0 14px 10px;
+  flex-wrap: wrap;
+}
+
+.dot {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.dotDone {
+  background: rgba(46, 196, 120, 0.15);
+  color: #1d9a5a;
+}
+
+.dotPartial {
+  background: rgba(255, 180, 0, 0.15);
+  color: #b37800;
+}
+
+.dotEmpty {
+  background: #f4f4f4;
+  color: #bbb;
+}
+
+/* ── Expanded detail ── */
+.detail {
+  border-top: 1px solid #f0f0f0;
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.zoneLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: 0.08em;
+  padding-bottom: 2px;
+}
+
+.layerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layerName {
+  font-size: 12px;
+  color: #444;
+  width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.layerId {
+  font-size: 10px;
+  color: #aaa;
+  margin-right: 5px;
+}
+
+.layerBar {
+  flex: 1;
+  height: 5px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.layerFill {
+  height: 100%;
+  background: #e94560;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.layerMeta {
+  font-size: 11px;
+  color: #aaa;
+  min-width: 32px;
+  text-align: right;
+}

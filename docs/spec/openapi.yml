@@ -47,6 +47,72 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/sessions/{sessionId}/end:
+    post:
+      tags: [sessions]
+      summary: セッションを即時終了してファクト抽出を実行
+      description: |
+        セッションを `completed` に更新し、その時点の会話からファクト抽出を実行します。
+        ユーザーが途中でインタビューを中断したいときに使用します。
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 終了するセッションのID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: 終了成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '404':
+          description: セッションが見つからないまたは既に終了済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/sessions/{sessionId}/skip:
+    post:
+      tags: [sessions]
+      summary: 現在の質問をスキップして次の質問へ進む
+      description: |
+        現在の質問を `userQuestions` に記録（再出題されないよう）し、
+        次の質問の opening メッセージを生成して返します。
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 対象セッションのID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: スキップ成功・次の質問を返却
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkipResponse'
+        '404':
+          description: セッションが見つからないまたは既に終了済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/sessions/onboarding:
     post:
       tags: [sessions]
@@ -350,6 +416,26 @@ components:
             `true` の場合、セッションを終了してください。
             オンボーディングの場合、このタイミングでコンテキスト抽出が完了しています。
           example: false
+        remainingTurns:
+          type: integer
+          nullable: true
+          description: |
+            残り主質問数（MAX_QUESTIONS_PER_SESSION - questionsAsked）。
+            onboarding セッションまたは算出不可の場合は null。
+          example: 2
+
+    SkipResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 次の質問の opening メッセージ
+          example: "では次の話題に移りましょう。あなたが誇りに思う仕事の経験を教えてください。"
+        remainingTurns:
+          type: integer
+          nullable: true
+          description: スキップ後の残り主質問数。onboarding の場合は null。
+          example: 1
 
     User:
       type: object

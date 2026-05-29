@@ -282,12 +282,18 @@ export async function processMessage(
         language,
       )
 
-  const { response, askedFollowup, shouldEndSession } = await generateInterviewResponse(
+  const { response, askedFollowup: rawAskedFollowup, shouldEndSession } = await generateInterviewResponse(
     systemPrompt,
     history
       .filter(log => log.role !== 'system')
       .map(log => ({ role: log.role as 'user' | 'assistant', content: log.content })),
   )
+
+  // Server-side enforcement: ignore AI's askedFollowup when the limit is already reached
+  const askedFollowup =
+    session.type !== 'onboarding' && session.followupCount >= MAX_FOLLOWUPS_PER_QUESTION
+      ? false
+      : rawAskedFollowup
 
   await db.insert(rawLogs).values({
     id: crypto.randomUUID(),
@@ -338,7 +344,90 @@ export async function processMessage(
       .where(eq(sessions.id, sessionId))
   }
 
-  return { response, shouldEnd: shouldEndSession }
+  const remainingTurns = session.type === 'onboarding'
+    ? null
+    : MAX_QUESTIONS_PER_SESSION - session.questionsAsked
+
+  return { response, shouldEnd: shouldEndSession, remainingTurns }
+}
+
+export async function endSession(db: Db, sessionId: string, userId = DEFAULT_USER_ID) {
+  const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
+  if (!session || session.status !== 'active') {
+    throw new Error('Session not found or already ended')
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(sessions)
+      .set({ status: 'completed', endedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(sessions.id, sessionId))
+
+    if (session.type === 'onboarding') {
+      await tx.update(users)
+        .set({ onboardingCompletedAt: sql`CURRENT_TIMESTAMP` })
+        .where(eq(users.id, userId))
+    }
+
+    if (session.currentQuestionId) {
+      await tx.insert(userQuestions)
+        .values({ userId, questionId: session.currentQuestionId })
+        .onConflictDoNothing()
+    }
+  })
+
+  const history = await db
+    .select()
+    .from(rawLogs)
+    .where(eq(rawLogs.sessionId, sessionId))
+    .orderBy(asc(rawLogs.createdAt))
+
+  const conversationText = history.map(l => `[${l.role}]: ${l.content}`).join('\n\n')
+  try {
+    await extractAndSaveFacts(db, sessionId, userId, conversationText)
+  } catch (err) {
+    console.error('Failed to extract facts from conversation:', err)
+  }
+}
+
+export async function skipQuestion(db: Db, sessionId: string, userId = DEFAULT_USER_ID) {
+  const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
+  if (!session || session.status !== 'active') {
+    throw new Error('Session not found or already ended')
+  }
+
+  const language = await getUserLanguage(db, userId)
+
+  if (session.currentQuestionId) {
+    await db.insert(userQuestions)
+      .values({ userId, questionId: session.currentQuestionId })
+      .onConflictDoNothing()
+  }
+
+  const nextQuestion = await selectNextQuestion(db, userId, language)
+  const newQuestionsAsked = session.questionsAsked + 1
+
+  await db.update(sessions)
+    .set({ questionsAsked: newQuestionsAsked, followupCount: 0, currentQuestionId: nextQuestion?.id ?? null })
+    .where(eq(sessions.id, sessionId))
+
+  const existingFacts = await getExistingFactsSummary(db, userId)
+  const fallbackMessage = language === 'en'
+    ? "Let's move on to a new topic. What experience from your work or life are you most proud of?"
+    : '次のトピックに移りましょう。これまでの経験の中で、一番誇りに思っていることを教えてください。'
+
+  const message = nextQuestion
+    ? await transformToCoachingTone(nextQuestion.content, existingFacts, language)
+    : fallbackMessage
+
+  await db.insert(rawLogs).values({
+    id: crypto.randomUUID(), userId, sessionId, role: 'assistant', content: message,
+  })
+
+  const remainingTurns = session.type === 'onboarding'
+    ? null
+    : MAX_QUESTIONS_PER_SESSION - newQuestionsAsked
+
+  return { message, remainingTurns }
 }
 
 async function extractAndSaveFacts(db: Db, sessionId: string, userId: string, conversation: string) {

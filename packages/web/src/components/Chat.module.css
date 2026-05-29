@@ -144,3 +144,35 @@
   opacity: 0.5;
   cursor: default;
 }
+
+.endBtn {
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #999;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.endBtn:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.skipRow {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 4px;
+}
+.skipBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #aaa;
+  padding: 4px 0;
+}
+.skipBtn:hover {
+  color: #1a1a2e;
+}

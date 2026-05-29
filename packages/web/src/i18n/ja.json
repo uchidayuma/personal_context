@@ -13,10 +13,22 @@
     "send": "送信",
     "typing": "入力中...",
     "sessionEnded": "セッションが終了しました。",
-    "newSession": "新しいセッションを開始"
+    "newSession": "新しいセッションを開始",
+    "endSession": "終了",
+    "skip": "この質問をパス →"
   },
   "export": {
     "copy": "クリップボードにコピー"
+  },
+  "progress": {
+    "label": "コンテキスト充足度",
+    "toggleLabel": "詳細を切り替え",
+    "remaining": "あと{{count}}問",
+    "zones": {
+      "CORE": "核心",
+      "SHAPE": "形成",
+      "STATE": "状態"
+    }
   },
   "onboarding": {
     "title": "はじめに：人生の骨格を作りましょう",
