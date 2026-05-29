@@ -1,0 +1,10 @@
+[build]
+dockerfilePath = "Dockerfile.demo"
+
+[deploy]
+startCommand = "node packages/server/dist/index.js"
+healthcheckPath = "/api/progress"
+healthcheckTimeout = 30
+
+[[services]]
+name = "personal-context-demo"

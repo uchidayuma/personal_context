@@ -110,6 +110,12 @@ export const professionalRecords = sqliteTable('professional_records', {
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
+export const demoRateLimit = sqliteTable('demo_rate_limit', {
+  ip: text('ip').notNull(),
+  date: text('date').notNull(),
+  sessionCount: integer('session_count').notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.ip, t.date] })])
+
 export const sessionVignettes = sqliteTable('session_vignettes', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

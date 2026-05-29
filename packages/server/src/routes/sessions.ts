@@ -1,10 +1,18 @@
 import { Hono } from 'hono'
 import { startSession, startOnboarding, endSession, skipQuestion } from '../interview/engine.js'
+import { checkDemoRateLimit } from '../db/client.js'
 import type { AppVariables } from '../types.js'
 
 export const sessionsRoute = new Hono<{ Variables: AppVariables }>()
 
 sessionsRoute.post('/', async (c) => {
+  if (process.env.DEMO_MODE === 'true') {
+    const ip = c.req.header('X-Forwarded-For')?.split(',')[0].trim()
+      ?? c.req.header('X-Real-IP')
+      ?? 'unknown'
+    const allowed = await checkDemoRateLimit(c.get('db'), ip)
+    if (!allowed) return c.json({ error: '1日1セッションまでです。明日またお試しください。' }, 429)
+  }
   try {
     const { sessionId, message } = await startSession(c.get('db'), c.get('userId'))
     return c.json({ sessionId, message })

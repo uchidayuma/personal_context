@@ -141,13 +141,6 @@ export default function Chat() {
             <div className={styles.typing}>{t('chat.typing')}</div>
           </div>
         )}
-        {!ended && !loading && messages.length >= 1 && sessionId && (
-          <div className={styles.skipRow}>
-            <button className={styles.skipBtn} onClick={skipQuestion}>
-              {t('chat.skip')}
-            </button>
-          </div>
-        )}
         {ended && (
           <div className={styles.sessionEndedBar}>
             {t('chat.sessionEnded')}
@@ -163,6 +156,13 @@ export default function Chat() {
       </div>
 
       <div className={styles.inputArea}>
+        {!ended && messages.length >= 1 && sessionId && (
+          <div className={styles.skipRow}>
+            <button className={styles.skipBtn} onClick={skipQuestion} disabled={loading}>
+              {t('chat.skip')}
+            </button>
+          </div>
+        )}
         {modelError && (
           <div className={styles.modelErrorBanner}>
             <strong>モデル設定エラー</strong><br />

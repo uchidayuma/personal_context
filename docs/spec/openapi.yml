@@ -37,6 +37,8 @@ paths:
       tags: [sessions]
       summary: 通常インタビューセッションを開始
       description: 新しい通常（regular）セッションを作成し、最初のコーチメッセージを返します。
+      parameters:
+        - $ref: '#/components/parameters/XUserIdHeader'
       responses:
         '200':
           description: セッション開始成功
@@ -44,6 +46,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionStart'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -694,6 +698,19 @@ components:
           type: string
           example: "sessionId and message are required"
 
+  parameters:
+    XUserIdHeader:
+      name: X-User-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: |
+        デモモード時の匿名ユーザーID（sessionStorageで生成されたUUID）。
+        セルフホスト版では不要。DEMO_MODE=true のサーバーでのみ使用される。
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
   responses:
     InternalError:
       description: サーバー内部エラー
@@ -703,3 +720,11 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             error: "Failed to process message"
+    RateLimitError:
+      description: レート制限超過（デモモードで1日1セッション上限に達した）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "1日1セッションまでです。明日またお試しください。"

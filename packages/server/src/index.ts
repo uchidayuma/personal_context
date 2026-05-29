@@ -3,7 +3,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { initDatabase, ensureDefaultUser, clearSimulateData, DEFAULT_USER_ID, db, simulateDb } from './db/client.js'
+import { initDatabase, ensureDefaultUser, ensureDemoUser, cleanupDemoData, clearSimulateData, DEFAULT_USER_ID, db, simulateDb } from './db/client.js'
 import { seedQuestions } from './db/seed.js'
 import type { AppVariables } from './types.js'
 import { sessionsRoute } from './routes/sessions.js'
@@ -33,8 +33,13 @@ async function bootstrap() {
 
   app.use('/api/*', async (c, next) => {
     const isSimulate = c.req.header('X-Simulate') === 'true'
-    c.set('db', isSimulate ? simulateDb : db)
-    c.set('userId', DEFAULT_USER_ID)
+    const targetDb = isSimulate ? simulateDb : db
+    c.set('db', targetDb)
+    const isDemo = process.env.DEMO_MODE === 'true'
+    const xUserId = c.req.header('X-User-Id')
+    const userId = isDemo && xUserId ? xUserId : DEFAULT_USER_ID
+    if (isDemo && xUserId) await ensureDemoUser(targetDb, userId)
+    c.set('userId', userId)
     await next()
   })
 
@@ -52,6 +57,11 @@ async function bootstrap() {
   app.route('/api/import', importRoute)
   app.route('/api/progress', progressRoute)
   app.route('/api/insights', insightsRoute)
+
+  if (process.env.DEMO_MODE === 'true') {
+    setInterval(() => cleanupDemoData(db), 60 * 60 * 1000)
+    console.log('[demo] cleanup job started (interval: 1h)')
+  }
 
   if (process.env.NODE_ENV === 'production') {
     app.use('/*', serveStatic({ root: './public' }))

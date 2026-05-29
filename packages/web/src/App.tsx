@@ -87,6 +87,13 @@ export default function App() {
 
   return (
     <div className={styles.app}>
+      {import.meta.env.VITE_DEMO_MODE === 'true' && (
+        <div style={{ background: '#1a1a2e', color: '#aaa', fontSize: 12, textAlign: 'center', padding: '6px 16px' }}>
+          デモ版：タブを閉じるとデータが消えます。続けて使うには
+          {' '}<a href="https://github.com/uchidayuma/personal_context" target="_blank" rel="noopener noreferrer" style={{ color: '#e94560' }}>セルフホスト版</a>
+          {' '}をお試しください。
+        </div>
+      )}
       <header className={styles.header}>
         <h1 className={styles.title}>{t('app.title')}</h1>
         <nav className={styles.nav}>

@@ -1,8 +1,18 @@
-# Personal Context Engine — 自分コンテキスト
+# Personal Context Engine
 
-**A portable, LLM-agnostic personal memory engine.** Answer a few interview questions each day, and the system quietly builds a structured knowledge base of who you are — exportable as plain Markdown to any LLM you choose.
+**Give AI a complete picture of who you are — once, and for any LLM.**
 
-> No more starting from scratch every time you open a new chat. No more lock-in.
+Answer a few interview questions each day. The engine quietly builds a structured knowledge base of you — exportable as plain Markdown to Claude, ChatGPT, Cursor, or any LLM you choose.
+
+> For people who want sharper AI responses, or who want to capture themselves as a complete Markdown document.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org)
+[![Docker](https://img.shields.io/badge/Docker-required-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+*日本語ドキュメント: [docs/](docs/)*
 
 ---
 
@@ -23,22 +33,12 @@ Personal Context Engine builds your context from the *outside in*:
 
 ---
 
-## Design Philosophy
-
-**How you felt reveals more truth than how you thought.**
-
-Rational explanations are already filtered through social expectations and self-image. Physical reactions — the moment your body felt light, the Sunday dread, the excitement you didn't expect — are the raw signal. This is why every interview question is anchored in behavior and sensation, not introspection.
-
-→ See [docs/vision/PHILOSOPHY.md](docs/vision/PHILOSOPHY.md) for the full design conviction.
-
----
-
 ## Quick Start
 
 **Requirements**: Docker + Docker Compose
 
 ```bash
-git clone https://github.com/your-org/personal_context
+git clone https://github.com/uchidayuma/personal_context
 cd personal_context
 
 cp .env.example .env
@@ -107,6 +107,16 @@ CORE files go into every system prompt. SHAPE and STATE files are loaded selecti
 
 ---
 
+## Design Philosophy
+
+**How you felt reveals more truth than how you thought.**
+
+Rational explanations are already filtered through social expectations and self-image. Physical reactions — the moment your body felt light, the Sunday dread, the excitement you didn't expect — are the raw signal. This is why every interview question is anchored in behavior and sensation, not introspection.
+
+→ See [docs/vision/PHILOSOPHY.md](docs/vision/PHILOSOPHY.md) for the full design conviction.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -145,7 +155,3 @@ Read [docs/vision/PHILOSOPHY.md](docs/vision/PHILOSOPHY.md) and [docs/design/OUT
 ## License
 
 MIT — see [LICENSE](LICENSE)
-
----
-
-*Japanese documentation: [docs/](docs/)*

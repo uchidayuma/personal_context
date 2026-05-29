@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: personal-context-demo
+    runtime: docker
+    dockerfilePath: ./Dockerfile.demo
+    plan: free
+    envVars:
+      - key: LLM_PROVIDER
+        value: deepseek
+      - key: DEEPSEEK_API_KEY
+        sync: false  # Renderダッシュボードで手動設定
+      - key: DB_PATH
+        value: /app/data/personal_context.db

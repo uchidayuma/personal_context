@@ -1,6 +1,6 @@
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import * as schema from './schema.js'
 import type { Db } from '../types.js'
 import path from 'path'
@@ -127,6 +127,12 @@ const CREATE_TABLES_SQL = `
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+  CREATE TABLE IF NOT EXISTS demo_rate_limit (
+    ip TEXT NOT NULL,
+    date TEXT NOT NULL,
+    session_count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (ip, date)
+  );
   CREATE TABLE IF NOT EXISTS session_vignettes (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -194,6 +200,42 @@ export async function getUser(targetDb: Db, userId: string): Promise<{ name: str
     language: row?.language ?? 'ja',
     onboardingCompletedAt: row?.onboardingCompletedAt ?? null,
   }
+}
+
+export async function ensureDemoUser(targetDb: Db, userId: string): Promise<void> {
+  await targetDb
+    .insert(schema.users)
+    .values({ id: userId, name: null, language: 'ja', onboardingCompletedAt: new Date().toISOString() })
+    .onConflictDoNothing()
+}
+
+export async function checkDemoRateLimit(targetDb: Db, ip: string): Promise<boolean> {
+  const today = new Date().toISOString().slice(0, 10)
+  const existing = await targetDb
+    .select({ sessionCount: schema.demoRateLimit.sessionCount })
+    .from(schema.demoRateLimit)
+    .where(and(eq(schema.demoRateLimit.ip, ip), eq(schema.demoRateLimit.date, today)))
+  if (existing.length > 0 && existing[0].sessionCount >= 1) return false
+  await targetDb
+    .insert(schema.demoRateLimit)
+    .values({ ip, date: today, sessionCount: 1 })
+    .onConflictDoUpdate({
+      target: [schema.demoRateLimit.ip, schema.demoRateLimit.date],
+      set: { sessionCount: sql`session_count + 1` },
+    })
+  return true
+}
+
+export async function cleanupDemoData(targetDb: Db): Promise<void> {
+  await targetDb
+    .delete(schema.users)
+    .where(and(
+      sql`datetime(created_at) < datetime('now', '-2 hours')`,
+      sql`id != ${DEFAULT_USER_ID}`,
+    ))
+  await targetDb
+    .delete(schema.demoRateLimit)
+    .where(sql`date < date('now')`)
 }
 
 export async function getUserLanguage(targetDb: Db, userId: string): Promise<string> {

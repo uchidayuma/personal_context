@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { sessionsRoute } from './sessions.js'
 import { createMockDb, createTestApp, req } from '../test/helpers.js'
 
@@ -7,6 +7,12 @@ vi.mock('../interview/engine.js', () => ({
   startOnboarding: vi.fn().mockResolvedValue({ sessionId: 'sess-2', message: 'はじめまして' }),
   endSession: vi.fn().mockResolvedValue(undefined),
   skipQuestion: vi.fn().mockResolvedValue({ message: '次の質問です', remainingTurns: 1 }),
+}))
+
+vi.mock('../db/client.js', () => ({
+  checkDemoRateLimit: vi.fn().mockResolvedValue(true),
+  DEFAULT_USER_ID: 'local_default_user',
+  ensureDemoUser: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('POST /api/sessions', () => {
@@ -20,6 +26,29 @@ describe('POST /api/sessions', () => {
     const res = await req(app, 'POST', '/api/sessions')
     expect(res.status).toBe(200)
     expect(res.body).toMatchObject({ sessionId: expect.any(String), message: expect.any(String) })
+    expect(res).toSatisfyApiSpec()
+  })
+})
+
+describe('POST /api/sessions (demo mode rate limit)', () => {
+  let app: ReturnType<typeof createTestApp>
+  const originalEnv = process.env.DEMO_MODE
+
+  beforeEach(() => {
+    process.env.DEMO_MODE = 'true'
+    app = createTestApp(sessionsRoute, '/api/sessions', createMockDb())
+  })
+
+  afterEach(() => {
+    process.env.DEMO_MODE = originalEnv
+  })
+
+  it('returns 429 when rate limit exceeded', async () => {
+    const { checkDemoRateLimit } = await import('../db/client.js')
+    vi.mocked(checkDemoRateLimit).mockResolvedValueOnce(false)
+    const res = await req(app, 'POST', '/api/sessions')
+    expect(res.status).toBe(429)
+    expect(res.body).toMatchObject({ error: expect.any(String) })
     expect(res).toSatisfyApiSpec()
   })
 })

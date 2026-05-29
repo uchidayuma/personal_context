@@ -12,6 +12,9 @@ export default defineConfig({
   },
   server: {
     host: true,  // Docker内で全インターフェースにバインド (0.0.0.0)
+    watch: {
+      usePolling: true,  // macOS+Docker ではinotifyが届かないためpollingが必要
+    },
     proxy: {
       // Docker内ではサービス名で通信する。ローカル直実行時は localhost にフォールバック
       '/api': process.env.VITE_API_URL ?? 'http://server:3001',
