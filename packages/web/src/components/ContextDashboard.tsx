@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
-import styles from './ContextDashboard.module.css'
+import { Card, CardHeader, CardTitle, CardAction, CardContent, CardFooter } from '@/components/ui/card'
+import { Progress, ProgressLabel, ProgressValue } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface LayerProgress {
   id: string
@@ -31,11 +35,13 @@ interface Props {
   onStartInterview: () => void
 }
 
-const ZONE_LABELS: Record<string, string> = {
-  CORE: 'CORE',
-  SHAPE: 'SHAPE',
-  STATE: 'STATE',
+const ZONE_BADGE_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
+  CORE: 'default',
+  SHAPE: 'secondary',
+  STATE: 'outline',
 }
+
+const ZONES: Array<'CORE' | 'SHAPE' | 'STATE'> = ['CORE', 'SHAPE', 'STATE']
 
 export default function ContextDashboard({ onStartInterview }: Props) {
   const [progress, setProgress] = useState<ProgressData | null>(null)
@@ -50,10 +56,8 @@ export default function ContextDashboard({ onStartInterview }: Props) {
           fetch('/api/progress'),
           fetch('/api/context-summary'),
         ])
-        const progressData = await progressRes.json() as ProgressData
-        const summaryData = await summaryRes.json() as ContextSummary
-        setProgress(progressData)
-        setSummary(summaryData)
+        setProgress(await progressRes.json() as ProgressData)
+        setSummary(await summaryRes.json() as ContextSummary)
       } catch {
         // leave null — show empty state
       } finally {
@@ -63,21 +67,8 @@ export default function ContextDashboard({ onStartInterview }: Props) {
     fetchData()
   }, [])
 
-  if (loading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.loadingState}>読み込み中...</div>
-      </div>
-    )
-  }
-
-  const zones: Array<'CORE' | 'SHAPE' | 'STATE'> = ['CORE', 'SHAPE', 'STATE']
-
   const sortedTimeline = summary
-    ? [...summary.timeline].sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year
-        return (a.month ?? 0) - (b.month ?? 0)
-      })
+    ? [...summary.timeline].sort((a, b) => a.year !== b.year ? a.year - b.year : (a.month ?? 0) - (b.month ?? 0))
     : []
 
   const groupedFacts: Record<string, { category: string; fact: string }[]> = {}
@@ -88,105 +79,133 @@ export default function ContextDashboard({ onStartInterview }: Props) {
     }
   }
 
-  return (
-    <div className={styles.page}>
-      {/* Section 1: Progress */}
-      <div className={styles.overallCard}>
-        <div className={styles.overallHeader}>
-          <span className={styles.overallTitle}>コンテキスト充足度</span>
-          <div className={styles.overallBadge}>
-            <span className={styles.overallNum}>{progress ? Math.round(progress.overall) : 0}</span>
-            <span className={styles.overallPct}>%</span>
-          </div>
-        </div>
-
-        {zones.map(zone => {
-          const layers = progress
-            ? progress.layers.filter(l => l.zone === zone)
-            : []
-          return (
-            <div key={zone} className={styles.zoneSection}>
-              <div className={styles.zoneLabel}>{ZONE_LABELS[zone]}</div>
-              {layers.map(layer => (
-                <div key={layer.id} className={styles.layerRow}>
-                  <span className={styles.layerName}>
-                    <span className={styles.layerId}>{layer.id}</span>
-                    {layer.name}
-                  </span>
-                  <div className={styles.progressBar}>
-                    <div
-                      className={styles.progressFill}
-                      style={{ width: `${Math.min(layer.percent, 100)}%` }}
-                    />
-                  </div>
-                  <span className={styles.layerMeta}>
-                    {Math.round(layer.percent)}%&nbsp;&nbsp;{layer.count}/{layer.threshold}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )
-        })}
-
-        <div className={styles.startBtnWrapper}>
-          <button className={styles.startBtn} onClick={onStartInterview}>
-            インタビューを続ける
-          </button>
-        </div>
+  if (loading) {
+    return (
+      <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 pb-12">
+        <Card>
+          <CardHeader className="border-b">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-16" />
+          </CardHeader>
+          <CardContent className="pt-4 flex flex-col gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </CardContent>
+        </Card>
       </div>
+    )
+  }
+
+  const overall = progress ? Math.round(progress.overall) : 0
+
+  return (
+    <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 pb-12">
+
+      {/* Section 1: Progress */}
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="text-sm font-semibold text-muted-foreground tracking-wide">
+            コンテキスト充足度
+          </CardTitle>
+          <CardAction>
+            <span className="text-4xl font-bold tabular-nums">{overall}</span>
+            <span className="text-lg font-semibold text-muted-foreground">%</span>
+          </CardAction>
+        </CardHeader>
+
+        <CardContent className="pt-5 flex flex-col gap-6">
+          {ZONES.map(zone => {
+            const layers = progress ? progress.layers.filter(l => l.zone === zone) : []
+            return (
+              <div key={zone}>
+                <Badge variant={ZONE_BADGE_VARIANT[zone]} className="mb-3">
+                  {zone}
+                </Badge>
+                <div className="flex flex-col gap-3">
+                  {layers.map(layer => (
+                    <Progress key={layer.id} value={Math.min(layer.percent, 100)}>
+                      <ProgressLabel>
+                        <span className="text-muted-foreground mr-1.5">{layer.id}</span>
+                        {layer.name}
+                      </ProgressLabel>
+                      <ProgressValue>{layer.count}/{layer.threshold}</ProgressValue>
+                    </Progress>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </CardContent>
+
+        <CardFooter className="border-t pt-4">
+          <Button onClick={onStartInterview} className="w-full">
+            インタビューを続ける
+          </Button>
+        </CardFooter>
+      </Card>
 
       {/* Section 2: Collected data */}
-      <div className={styles.dataCard}>
-        <div className={styles.dataCardHeader}>収集済みデータ</div>
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="text-sm font-semibold text-muted-foreground tracking-wide">
+            収集済みデータ
+          </CardTitle>
+        </CardHeader>
 
-        {/* Timeline */}
-        <div className={styles.dataSection}>
-          <div className={styles.dataSectionTitle}>
-            LIFE TIMELINE
-            {progress && (
-              <span className={styles.dataSectionCount}>{progress.totals.timeline}件</span>
-            )}
-          </div>
-          {sortedTimeline.length === 0 ? (
-            <p className={styles.emptyNote}>まだデータがありません</p>
-          ) : (
-            <div className={styles.dataSectionBody}>
-              {sortedTimeline.map((e, i) => (
-                <div key={i} className={styles.timelineRow}>
-                  <span className={styles.timelineYear}>
-                    {e.year}{e.month ? `/${e.month}` : ''}
-                  </span>
-                  <span className={styles.timelineDesc}>{e.description}</span>
-                </div>
-              ))}
+        <CardContent className="pt-5 flex flex-col gap-8">
+
+          {/* Timeline */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-bold tracking-widest text-muted-foreground">LIFE TIMELINE</span>
+              {progress && (
+                <Badge variant="outline">{progress.totals.timeline}件</Badge>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Facts */}
-        <div className={styles.dataSection}>
-          <div className={styles.dataSectionTitle}>
-            KEY FACTS
-            {progress && (
-              <span className={styles.dataSectionCount}>{progress.totals.facts}件</span>
-            )}
-          </div>
-          {Object.keys(groupedFacts).length === 0 ? (
-            <p className={styles.emptyNote}>まだデータがありません</p>
-          ) : (
-            Object.entries(groupedFacts).map(([category, facts]) => (
-              <div key={category} className={styles.dataSectionBody}>
-                {facts.map((f, i) => (
-                  <div key={i} className={styles.factRow}>
-                    <span className={styles.factCategory}>{f.category}</span>
-                    <span className={styles.factText}>{f.fact}</span>
+            {sortedTimeline.length === 0 ? (
+              <p className="text-xs text-muted-foreground">まだデータがありません</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {sortedTimeline.map((e, i) => (
+                  <div key={i} className="flex gap-3 items-baseline">
+                    <span className="text-xs tabular-nums text-muted-foreground w-14 shrink-0">
+                      {e.year}{e.month ? `/${e.month}` : ''}
+                    </span>
+                    <span className="text-xs leading-relaxed">{e.description}</span>
                   </div>
                 ))}
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+
+          {/* Facts */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-bold tracking-widest text-muted-foreground">KEY FACTS</span>
+              {progress && (
+                <Badge variant="outline">{progress.totals.facts}件</Badge>
+              )}
+            </div>
+            {Object.keys(groupedFacts).length === 0 ? (
+              <p className="text-xs text-muted-foreground">まだデータがありません</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {Object.entries(groupedFacts).map(([, facts]) =>
+                  facts.map((f, i) => (
+                    <div key={i} className="flex gap-3 items-baseline">
+                      <Badge variant="secondary" className="shrink-0">{f.category}</Badge>
+                      <span className="text-xs leading-relaxed">{f.fact}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+        </CardContent>
+      </Card>
+
     </div>
   )
 }
