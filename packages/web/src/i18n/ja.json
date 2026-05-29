@@ -3,8 +3,14 @@
     "title": "自分コンテキスト",
     "nav": {
       "interview": "インタビュー",
+      "myContext": "マイコンテキスト",
       "exportPublic": "エクスポート（公開）",
       "exportAll": "エクスポート（全て）"
+    },
+    "demo": {
+      "notice": "デモ版：タブを閉じるとデータが消えます。続けて使うには",
+      "selfHost": "セルフホスト版",
+      "noticeSuffix": "をお試しください。"
     }
   },
   "chat": {
@@ -15,7 +21,12 @@
     "sessionEnded": "セッションが終了しました。",
     "newSession": "新しいセッションを開始",
     "endSession": "終了",
-    "skip": "この質問をパス →"
+    "skip": "この質問をパス →",
+    "recordStop": "録音停止",
+    "transcribing": "変換中...",
+    "voiceInput": "音声入力",
+    "voiceMode": "音声対話モード",
+    "modelError": "モデル設定エラー"
   },
   "export": {
     "copy": "クリップボードにコピー"
@@ -30,11 +41,67 @@
       "STATE": "状態"
     }
   },
+  "dashboard": {
+    "loading": "読み込み中...",
+    "completeness": "コンテキスト充足度",
+    "continueInterview": "インタビューを続ける",
+    "collectedData": "収集済みデータ",
+    "noData": "まだデータがありません",
+    "countItems": "{{count}}件",
+    "layers": {
+      "L1": "価値観・信念",
+      "L2": "気質・性格",
+      "L3": "人生年表",
+      "L4": "職務詳細",
+      "L5": "関係性",
+      "L6": "意見・スタンス",
+      "L7": "恐れ・回避",
+      "L8": "繰り返す癖",
+      "L9": "目標・方向感",
+      "L10": "好み・スタイル"
+    }
+  },
+  "voice": {
+    "networkError": "通信エラーが発生しました",
+    "sessionEnded": "セッション終了",
+    "pressToSpeak": "押して話す",
+    "listening": "話してください...",
+    "processing": "処理中...",
+    "speaking": "コーチが話しています",
+    "backToText": "✕ テキストモードに戻る"
+  },
+  "import": {
+    "complete": "インポート完了",
+    "professional": "職務履歴",
+    "timeline": "年表イベント",
+    "skills": "スキル・事実",
+    "aiComment": "💬 AIからのひとこと",
+    "analyzing": "分析中...",
+    "tooFewData": "データが少ないため、インタビューで深めてみましょう。",
+    "contextCompleteness": "🧠 コンテキスト完成度",
+    "contextDesc": "あなたの人生を10のレイヤーに分けて蓄積します。インタビューを重ねるほど精度が上がります。",
+    "locked": "インタビューで解放",
+    "countItems": "{{count}}件",
+    "toInterview": "インタビューで深めていく →",
+    "uploadHeading": "職務経歴書をアップロード（任意）",
+    "uploadDesc": "事前にインポートすると、インタビューが深掘りに集中できます",
+    "uploading": "解析中...",
+    "dropzone": "PDF / Excel / CSV をドロップ\nまたはクリックして選択",
+    "skip": "スキップしてインタビューへ",
+    "zones": {
+      "CORE": "変わらない核　— 価値観・気質",
+      "SHAPE": "形成されたもの　— 経験・スキル・関係性",
+      "STATE": "今この瞬間　— 目標・好み"
+    }
+  },
   "onboarding": {
     "title": "はじめに：人生の骨格を作りましょう",
     "description": "最初に一度だけ、あなたの人生の転機を話してもらいます。5分ほどで、コンテキストの骨格が完成します。",
     "start": "はじめる",
     "completed": "オンボーディング完了。日常のインタビューを始めましょう。",
-    "toInterview": "インタビューへ"
+    "toInterview": "インタビューへ",
+    "generating": "コンテキストを生成中...",
+    "skeletonTitle": "あなたのコンテキスト骨格",
+    "skeletonSubtitle": "5分の会話から抽出されました"
   }
 }

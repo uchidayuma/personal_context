@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './ContextDashboard.module.css'
 
 interface LayerProgress {
@@ -31,13 +32,8 @@ interface Props {
   onStartInterview: () => void
 }
 
-const ZONE_LABELS: Record<string, string> = {
-  CORE: 'CORE',
-  SHAPE: 'SHAPE',
-  STATE: 'STATE',
-}
-
 export default function ContextDashboard({ onStartInterview }: Props) {
+  const { t } = useTranslation()
   const [progress, setProgress] = useState<ProgressData | null>(null)
   const [summary, setSummary] = useState<ContextSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -66,7 +62,7 @@ export default function ContextDashboard({ onStartInterview }: Props) {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loadingState}>読み込み中...</div>
+        <div className={styles.loadingState}>{t('dashboard.loading')}</div>
       </div>
     )
   }
@@ -93,7 +89,7 @@ export default function ContextDashboard({ onStartInterview }: Props) {
       {/* Section 1: Progress */}
       <div className={styles.overallCard}>
         <div className={styles.overallHeader}>
-          <span className={styles.overallTitle}>コンテキスト充足度</span>
+          <span className={styles.overallTitle}>{t('dashboard.completeness')}</span>
           <div className={styles.overallBadge}>
             <span className={styles.overallNum}>{progress ? Math.round(progress.overall) : 0}</span>
             <span className={styles.overallPct}>%</span>
@@ -106,12 +102,12 @@ export default function ContextDashboard({ onStartInterview }: Props) {
             : []
           return (
             <div key={zone} className={styles.zoneSection}>
-              <div className={styles.zoneLabel}>{ZONE_LABELS[zone]}</div>
+              <div className={styles.zoneLabel}>{zone}</div>
               {layers.map(layer => (
                 <div key={layer.id} className={styles.layerRow}>
                   <span className={styles.layerName}>
                     <span className={styles.layerId}>{layer.id}</span>
-                    {layer.name}
+                    {t(`dashboard.layers.${layer.id}`, { defaultValue: layer.name })}
                   </span>
                   <div className={styles.progressBar}>
                     <div
@@ -130,25 +126,25 @@ export default function ContextDashboard({ onStartInterview }: Props) {
 
         <div className={styles.startBtnWrapper}>
           <button className={styles.startBtn} onClick={onStartInterview}>
-            インタビューを続ける
+            {t('dashboard.continueInterview')}
           </button>
         </div>
       </div>
 
       {/* Section 2: Collected data */}
       <div className={styles.dataCard}>
-        <div className={styles.dataCardHeader}>収集済みデータ</div>
+        <div className={styles.dataCardHeader}>{t('dashboard.collectedData')}</div>
 
         {/* Timeline */}
         <div className={styles.dataSection}>
           <div className={styles.dataSectionTitle}>
             LIFE TIMELINE
             {progress && (
-              <span className={styles.dataSectionCount}>{progress.totals.timeline}件</span>
+              <span className={styles.dataSectionCount}>{t('dashboard.countItems', { count: progress.totals.timeline })}</span>
             )}
           </div>
           {sortedTimeline.length === 0 ? (
-            <p className={styles.emptyNote}>まだデータがありません</p>
+            <p className={styles.emptyNote}>{t('dashboard.noData')}</p>
           ) : (
             <div className={styles.dataSectionBody}>
               {sortedTimeline.map((e, i) => (
@@ -168,11 +164,11 @@ export default function ContextDashboard({ onStartInterview }: Props) {
           <div className={styles.dataSectionTitle}>
             KEY FACTS
             {progress && (
-              <span className={styles.dataSectionCount}>{progress.totals.facts}件</span>
+              <span className={styles.dataSectionCount}>{t('dashboard.countItems', { count: progress.totals.facts })}</span>
             )}
           </div>
           {Object.keys(groupedFacts).length === 0 ? (
-            <p className={styles.emptyNote}>まだデータがありません</p>
+            <p className={styles.emptyNote}>{t('dashboard.noData')}</p>
           ) : (
             Object.entries(groupedFacts).map(([category, facts]) => (
               <div key={category} className={styles.dataSectionBody}>

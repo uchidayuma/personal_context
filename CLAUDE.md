@@ -32,6 +32,7 @@
 | `docs/features/VOICE_INPUT_DESIGN.md`             | 音声対話モードの設計                                     |
 | `docs/features/MCP_DESIGN.md`                     | MCPサーバーの設計（Claude Code / Codex連携）             |
 | `docs/features/DEMO_DEPLOYMENT_DESIGN.md`         | 公開デモ環境の設計（匿名マルチユーザー・データ揮発性）   |
+| `docs/features/I18N_DESIGN.md`                    | 多言語対応の設計（JA/EN切り替え・react-i18next・質問翻訳）|
 | `docs/output_template/`                           | 出力ファイルのテンプレート（L01〜L10 + life_chapters）   |
 
 新しい機能領域には対応するドキュメントを追加する。

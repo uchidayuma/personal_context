@@ -3,8 +3,14 @@
     "title": "Personal Context",
     "nav": {
       "interview": "Interview",
+      "myContext": "My Context",
       "exportPublic": "Export (Public)",
       "exportAll": "Export (All)"
+    },
+    "demo": {
+      "notice": "Demo: data clears when you close the tab. To keep your data,",
+      "selfHost": "self-host it",
+      "noticeSuffix": "."
     }
   },
   "chat": {
@@ -15,7 +21,12 @@
     "sessionEnded": "The session has ended.",
     "newSession": "Start a new session",
     "endSession": "End",
-    "skip": "Skip this question →"
+    "skip": "Skip this question →",
+    "recordStop": "Stop recording",
+    "transcribing": "Transcribing...",
+    "voiceInput": "Voice input",
+    "voiceMode": "Voice Mode",
+    "modelError": "Model configuration error"
   },
   "export": {
     "copy": "Copy to clipboard"
@@ -30,11 +41,67 @@
       "STATE": "STATE"
     }
   },
+  "dashboard": {
+    "loading": "Loading...",
+    "completeness": "Context Completeness",
+    "continueInterview": "Continue Interview",
+    "collectedData": "Collected Data",
+    "noData": "No data yet",
+    "countItems": "{{count}} items",
+    "layers": {
+      "L1": "Values & Beliefs",
+      "L2": "Character & Temperament",
+      "L3": "Life Timeline",
+      "L4": "Professional History",
+      "L5": "Relationships",
+      "L6": "Opinions & Stances",
+      "L7": "Fears & Avoidances",
+      "L8": "Recurring Patterns",
+      "L9": "Goals & Direction",
+      "L10": "Preferences & Style"
+    }
+  },
+  "voice": {
+    "networkError": "A network error occurred",
+    "sessionEnded": "Session ended",
+    "pressToSpeak": "Press to speak",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "speaking": "Coach is speaking",
+    "backToText": "✕ Back to text mode"
+  },
+  "import": {
+    "complete": "Import complete",
+    "professional": "Work history",
+    "timeline": "Timeline events",
+    "skills": "Skills & facts",
+    "aiComment": "💬 AI insight",
+    "analyzing": "Analyzing...",
+    "tooFewData": "Not much data yet — let's dig deeper in the interview.",
+    "contextCompleteness": "🧠 Context Completeness",
+    "contextDesc": "Your life is built across 10 layers. The more interviews, the richer the picture.",
+    "locked": "Unlocked through interview",
+    "countItems": "{{count}} items",
+    "toInterview": "Continue in interview →",
+    "uploadHeading": "Upload résumé (optional)",
+    "uploadDesc": "Importing in advance lets the interview focus on deeper questions.",
+    "uploading": "Analyzing...",
+    "dropzone": "Drop PDF / Excel / CSV\nor click to select",
+    "skip": "Skip to interview",
+    "zones": {
+      "CORE": "Unchanging core — values & character",
+      "SHAPE": "Shaped by experience — history, skills & relationships",
+      "STATE": "Right now — goals & preferences"
+    }
+  },
   "onboarding": {
     "title": "Getting Started: Build Your Life Skeleton",
     "description": "Just once, tell us about the turning points in your life. In about 5 minutes, you'll have the foundation of your personal context.",
     "start": "Get Started",
     "completed": "Onboarding complete. Let's start your regular interviews.",
-    "toInterview": "Go to Interview"
+    "toInterview": "Go to Interview",
+    "generating": "Building your context...",
+    "skeletonTitle": "Your Context Skeleton",
+    "skeletonSubtitle": "Extracted from a 5-minute conversation"
   }
 }

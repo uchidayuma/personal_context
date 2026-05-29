@@ -89,9 +89,9 @@ export default function App() {
     <div className={styles.app}>
       {import.meta.env.VITE_DEMO_MODE === 'true' && (
         <div style={{ background: '#1a1a2e', color: '#aaa', fontSize: 12, textAlign: 'center', padding: '6px 16px' }}>
-          デモ版：タブを閉じるとデータが消えます。続けて使うには
-          {' '}<a href="https://github.com/uchidayuma/personal_context" target="_blank" rel="noopener noreferrer" style={{ color: '#e94560' }}>セルフホスト版</a>
-          {' '}をお試しください。
+          {t('app.demo.notice')}
+          {' '}<a href="https://github.com/uchidayuma/personal_context" target="_blank" rel="noopener noreferrer" style={{ color: '#e94560' }}>{t('app.demo.selfHost')}</a>
+          {t('app.demo.noticeSuffix')}
         </div>
       )}
       <header className={styles.header}>
@@ -109,7 +109,7 @@ export default function App() {
             disabled={onboarding}
             className={`${styles.navBtn} ${view === 'dashboard' ? styles.navBtnActive : ''}`}
           >
-            マイコンテキスト
+            {t('app.nav.myContext')}
           </button>
           <button
             onClick={() => handleExport(false)}

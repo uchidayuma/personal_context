@@ -101,7 +101,7 @@ export default function Onboarding({ onComplete }: Props) {
     if (summaryLoading || !summary) {
       return (
         <div className={styles.previewLoading}>
-          コンテキストを生成中...
+          {t('onboarding.generating')}
         </div>
       )
     }
@@ -109,8 +109,8 @@ export default function Onboarding({ onComplete }: Props) {
     return (
       <div className={styles.preview}>
         <div>
-          <h2 className={styles.previewHeading}>あなたのコンテキスト骨格</h2>
-          <p className={styles.previewSubheading}>5分の会話から抽出されました</p>
+          <h2 className={styles.previewHeading}>{t('onboarding.skeletonTitle')}</h2>
+          <p className={styles.previewSubheading}>{t('onboarding.skeletonSubtitle')}</p>
         </div>
 
         {summary.timeline.length > 0 && (
@@ -190,7 +190,7 @@ export default function Onboarding({ onComplete }: Props) {
             <button
               onClick={() => voice.isRecording ? voice.stop() : voice.start(i18n.language)}
               disabled={loading || voice.isTranscribing}
-              title={voice.isRecording ? '録音停止' : voice.isTranscribing ? '変換中...' : '音声入力'}
+              title={voice.isRecording ? t('chat.recordStop') : voice.isTranscribing ? t('chat.transcribing') : t('chat.voiceInput')}
               className={`${styles.micBtn} ${voice.isRecording ? styles.micBtnRecording : ''}`}
             >
               {voice.isTranscribing ? '⏳' : voice.isRecording ? '⏹' : '🎤'}

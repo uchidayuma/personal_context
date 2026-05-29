@@ -165,7 +165,7 @@ export default function Chat() {
         )}
         {modelError && (
           <div className={styles.modelErrorBanner}>
-            <strong>モデル設定エラー</strong><br />
+            <strong>{t('chat.modelError')}</strong><br />
             {modelError}
           </div>
         )}
@@ -183,7 +183,7 @@ export default function Chat() {
           {sessionId && !ended && (
             <button
               onClick={() => setVoiceMode(true)}
-              title="音声対話モード"
+              title={t('chat.voiceMode')}
               className={styles.voiceModeBtn}
             >
               🎧
@@ -193,7 +193,7 @@ export default function Chat() {
             <button
               onClick={() => voice.isRecording ? voice.stop() : voice.start(i18n.language)}
               disabled={loading || ended || voice.isTranscribing}
-              title={voice.isRecording ? '録音停止' : voice.isTranscribing ? '変換中...' : '音声入力'}
+              title={voice.isRecording ? t('chat.recordStop') : voice.isTranscribing ? t('chat.transcribing') : t('chat.voiceInput')}
               className={`${styles.micBtn} ${voice.isRecording ? styles.micBtnRecording : ''}`}
             >
               {voice.isTranscribing ? '⏳' : voice.isRecording ? '⏹' : '🎤'}

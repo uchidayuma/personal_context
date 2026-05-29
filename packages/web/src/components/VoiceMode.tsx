@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
 import styles from './VoiceMode.module.css'
 
@@ -18,6 +19,7 @@ export default function VoiceMode({
   sessionId, language, initialCoachMessage, ended,
   onClose, onExchange, onEnd,
 }: Props) {
+  const { t } = useTranslation()
   const [phase, setPhase] = useState<Phase>('idle')
   const [coachText, setCoachText] = useState(initialCoachMessage)
   const [userText, setUserText] = useState('')
@@ -76,7 +78,7 @@ export default function VoiceMode({
         speak(data.response, () => setPhase('idle'))
       }
     } catch {
-      setFetchError('通信エラーが発生しました')
+      setFetchError(t('voice.networkError'))
       setPhase('idle')
     }
   })
@@ -94,10 +96,10 @@ export default function VoiceMode({
   const canRecord = displayPhase === 'idle' && !ended
 
   const PHASE_LABEL: Record<Phase, string> = {
-    idle: ended ? 'セッション終了' : '押して話す',
-    recording: '話してください...',
-    processing: '処理中...',
-    speaking: 'コーチが話しています',
+    idle: ended ? t('voice.sessionEnded') : t('voice.pressToSpeak'),
+    recording: t('voice.listening'),
+    processing: t('voice.processing'),
+    speaking: t('voice.speaking'),
   }
 
   const MIC_ICON: Record<Phase, string> = {
@@ -113,7 +115,7 @@ export default function VoiceMode({
         className={styles.closeBtn}
         onClick={() => { window.speechSynthesis.cancel(); onClose() }}
       >
-        ✕ テキストモードに戻る
+        {t('voice.backToText')}
       </button>
 
       {voices.length > 0 && (

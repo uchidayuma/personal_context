@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './ImportUpload.module.css'
 
 interface ImportResult {
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function ImportUpload({ onComplete, onSkip }: Props) {
+  const { t } = useTranslation()
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -95,52 +97,46 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
       <div className={styles.resultContainer}>
         <div className={styles.resultHeader}>
           <div className={styles.successIcon}>✓</div>
-          <h3 className={styles.successTitle}>インポート完了</h3>
+          <h3 className={styles.successTitle}>{t('import.complete')}</h3>
           <div className={styles.counts}>
             <div className={styles.count}>
               <span className={styles.countNum}>{imported.professional}</span>
-              <span className={styles.countLabel}>職務履歴</span>
+              <span className={styles.countLabel}>{t('import.professional')}</span>
             </div>
             <div className={styles.count}>
               <span className={styles.countNum}>{imported.timeline}</span>
-              <span className={styles.countLabel}>年表イベント</span>
+              <span className={styles.countLabel}>{t('import.timeline')}</span>
             </div>
             <div className={styles.count}>
               <span className={styles.countNum}>{imported.facts}</span>
-              <span className={styles.countLabel}>スキル・事実</span>
+              <span className={styles.countLabel}>{t('import.skills')}</span>
             </div>
           </div>
         </div>
 
         {/* AI comment */}
         <div className={styles.insightCard}>
-          <div className={styles.insightHeader}>💬 AIからのひとこと</div>
+          <div className={styles.insightHeader}>{t('import.aiComment')}</div>
           {previewLoading || !preview ? (
             <div className={styles.insightLoading}>
               <div className={styles.spinnerSmall} />
-              <span>分析中...</span>
+              <span>{t('import.analyzing')}</span>
             </div>
           ) : preview.comment ? (
             <p className={styles.insightText}>{preview.comment}</p>
           ) : (
-            <p className={styles.insightEmpty}>データが少ないため、インタビューで深めてみましょう。</p>
+            <p className={styles.insightEmpty}>{t('import.tooFewData')}</p>
           )}
         </div>
 
         {preview && preview.layers.length > 0 && (
           <div className={styles.layersSection}>
-            <div className={styles.layersSectionTitle}>🧠 コンテキスト完成度</div>
-            <p className={styles.layersSectionDesc}>
-              あなたの人生を10のレイヤーに分けて蓄積します。インタビューを重ねるほど精度が上がります。
-            </p>
+            <div className={styles.layersSectionTitle}>{t('import.contextCompleteness')}</div>
+            <p className={styles.layersSectionDesc}>{t('import.contextDesc')}</p>
             {(['CORE', 'SHAPE', 'STATE'] as const).map(zone => {
               const zoneLayers = preview.layers.filter(l => l.zone === zone)
               if (zoneLayers.length === 0) return null
-              const zoneDesc = {
-                CORE: '変わらない核　— 価値観・気質',
-                SHAPE: '形成されたもの　— 経験・スキル・関係性',
-                STATE: '今この瞬間　— 目標・好み',
-              }[zone]
+              const zoneDesc = t(`import.zones.${zone}`)
               return (
                 <div key={zone} className={styles.layerZone}>
                   <div className={styles.layerZoneLabel}>{zone} <span className={styles.layerZoneDesc}>{zoneDesc}</span></div>
@@ -155,7 +151,7 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
                         />
                       </div>
                       <span className={`${styles.layerCount} ${layer.count === 0 ? styles.layerCountLocked : ''}`}>
-                        {layer.count > 0 ? `${layer.count}件` : 'インタビューで解放'}
+                        {layer.count > 0 ? t('import.countItems', { count: layer.count }) : t('import.locked')}
                       </span>
                     </div>
                   ))}
@@ -182,7 +178,7 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
         )}
 
         <button className={styles.primaryBtn} onClick={onComplete}>
-          インタビューで深めていく →
+          {t('import.toInterview')}
         </button>
       </div>
     )
@@ -190,8 +186,8 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.heading}>職務経歴書をアップロード（任意）</h3>
-      <p className={styles.desc}>事前にインポートすると、インタビューが深掘りに集中できます</p>
+      <h3 className={styles.heading}>{t('import.uploadHeading')}</h3>
+      <p className={styles.desc}>{t('import.uploadDesc')}</p>
 
       <div
         className={`${styles.dropzone} ${dragging ? styles.dropzoneDragging : ''} ${uploading ? styles.dropzoneUploading : ''}`}
@@ -210,12 +206,12 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
         {uploading ? (
           <>
             <div className={styles.spinner} />
-            <p className={styles.uploadingText}>解析中...</p>
+            <p className={styles.uploadingText}>{t('import.uploading')}</p>
           </>
         ) : (
           <>
             <p className={styles.dropzoneIcon}>📄</p>
-            <p className={styles.dropzoneText}>PDF / Excel / CSV をドロップ<br />またはクリックして選択</p>
+            <p className={styles.dropzoneText} style={{ whiteSpace: 'pre-line' }}>{t('import.dropzone')}</p>
           </>
         )}
       </div>
@@ -223,7 +219,7 @@ export default function ImportUpload({ onComplete, onSkip }: Props) {
       {error && <p className={styles.error}>{error}</p>}
 
       <button className={styles.skipBtn} onClick={onSkip}>
-        スキップしてインタビューへ
+        {t('import.skip')}
       </button>
     </div>
   )

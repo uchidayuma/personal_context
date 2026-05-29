@@ -20,6 +20,8 @@ Answer a few interview questions each day. The engine quietly builds a structure
 
 **Try it without installing anything:** [personal-context.onrender.com](https://personal-context.onrender.com/)
 
+> **Note:** The demo runs on Render's free tier. If the service has been idle, it will take **~30 seconds to wake up** on first visit — this is normal. Just wait for the app to load.
+>
 > Demo sessions are ephemeral — data is not persisted after you close the tab. Limited to 1 session per IP per day.
 
 ---
