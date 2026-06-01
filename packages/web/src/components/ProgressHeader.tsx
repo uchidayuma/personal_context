@@ -14,6 +14,12 @@ interface LayerProgress {
 export interface ProgressData {
   overall: number
   layers: LayerProgress[]
+  totals: {
+    facts: number
+    timeline: number
+    professional: number
+    vignettes: number
+  }
 }
 
 interface Props {

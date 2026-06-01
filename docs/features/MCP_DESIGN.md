@@ -50,8 +50,8 @@ LLMが `list_resources` で発見し、`read_resource(uri)` で取得する。
 | `context://goals` | 現在の目標・方向感 | L9 |
 | `context://preferences` | 作業スタイル・コミュニケーション好み | L10 |
 
-**privateリソース（fears / patterns）について**  
-デフォルトでは返す。ユーザーが環境変数 `MCP_INCLUDE_PRIVATE=false` を設定した場合は除外する。
+**fears / patterns について**  
+他のレイヤーと同様、デフォルトで返す。センシティブなデータのため、`get_context` ツールを呼ぶ際は必要な場合のみ `layers` に含めることを推奨。
 
 ---
 
@@ -62,7 +62,6 @@ LLMが `list_resources` で発見し、`read_resource(uri)` で取得する。
 ```typescript
 get_context(options?: {
   layers?: string[]         // 取得するリソース名（省略時はCOREセット）
-  include_private?: boolean // デフォルト: true
 })
 ```
 
@@ -164,7 +163,6 @@ VS Code の設定（`settings.json`）に追加：
 | 変数 | デフォルト | 説明 |
 |---|---|---|
 | `DB_PATH` | `./data/personal_context.db` | SQLiteファイルのパス |
-| `MCP_INCLUDE_PRIVATE` | `true` | fears/patternsを含むか |
 
 ---
 

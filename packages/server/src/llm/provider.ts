@@ -3,6 +3,7 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
 import { STRUCTURED_FACT_CATEGORIES } from '../db/schema.js'
+import { buildSubcategoryPrompt } from '../export/layers.js'
 
 export class ModelStructuredOutputError extends Error {
   readonly code = 'MODEL_NOT_SUPPORTED' as const
@@ -138,8 +139,8 @@ export async function transformToCoachingTone(
   language: string,
 ): Promise<string> {
   const instruction = language === 'en'
-    ? `You are a warm, empathetic life coach. Transform the given question into a natural, conversational coaching style in English. Known context about the user: ${existingContext || 'none'}. Output only the transformed question.`
-    : `あなたは温かく共感力のあるライフコーチです。与えられた質問を自然で親しみやすいコーチングスタイルに変換してください。ユーザーの既知情報: ${existingContext || 'なし'}。変換後の質問のみを出力してください。`
+    ? `Transform the given question into a short, natural conversational question in English. Rules: ask exactly ONE question, keep it concise (one sentence), do not add explanations or sub-questions. Known context about the user: ${existingContext || 'none'}. Output only the transformed question.`
+    : `与えられた質問を短く自然な日本語の質問に変換してください。ルール：質問は必ず1つだけ、1文で簡潔に、補足説明や追加質問を付けない。ユーザーの既知情報: ${existingContext || 'なし'}。変換後の質問のみを出力してください。`
 
   const { text } = await generateText({
     model: getLLM(),
@@ -163,6 +164,7 @@ const ExtractionSchema = z.object({
       'patterns',      // NEW: 繰り返す癖
       'preferences',   // NEW: 好み・スタイル
     ]).describe('カテゴリ'),
+    subcategory: z.string().optional().describe('カテゴリ内のセクション（後述のリストから選ぶ）'),
     fact: z.string().describe('1文の事実記述'),
     confidence_score: z.number().min(0).max(1),
     visibility: z.enum(['public', 'private']),
@@ -204,6 +206,7 @@ const DocumentImportSchema = z.object({
   })),
   facts: z.array(z.object({
     category: z.enum(STRUCTURED_FACT_CATEGORIES),
+    subcategory: z.string().optional(),
     fact: z.string(),
   })),
 })
@@ -284,17 +287,28 @@ Lines are labeled [assistant] (interviewer) and [user] (interviewee).
 例: "自律的に働けない環境には対価関係なく入らない"
 
 **character（L2: 気質・性格）**
-生まれ持った傾向として読み取れるもの。「いつもそうなる」「昔からそうだった」という文脈で語られるもの。
-例: "議論になると相手の立場に立って考えすぎて自分の意見を引っ込めることが多い"
+重要: 「昔からそうだった」「いつもそうなる」という明示的な言葉は不要。
+具体的な行動・反応・感覚の記述から、その人の気質が透けて見える場合は積極的に抽出する。
+- 感情・身体反応で意思決定するタイプ（「体がすぅっと冷める」「胸がじわっとする方を選ぶ」）
+- 葛藤の処理スタイル（「声を無視せず受け取ってから確認する」）
+- 他者・環境への反応パターン（「マイクロマネジメントに体が反応する」）
+例: "内的葛藤を否定せず一度受け取ってから行動を選ぶ傾向がある"
+例: "身体感覚を意思決定の基準にしている"
 ※ visibility は 'private' 固定
 
 **relationships（L5: 関係性）**
-具体的な人物名・関係性の事実。合う人・合わない人のパターン。
+具体的な人物・関係性タイプへの言及。名前がなくても「上司」「元同僚」「カウンセラー」などの属性で抽出してよい。
+合う人・合わない人・影響を受けた人のパターンも含む。
 例: "毎朝マイクロマネジメントしてくる上司には体が反応して出社できなくなった"
+例: "知人に紹介されたカウンセラーとの出会いが転機になった"
 
 **opinions（L6: 意見・スタンス）**
-技術・社会・ビジネス・働き方に対する具体的な立場。「過大評価」「間違っている」「好きではない」といった評価的な発言。
+技術・社会・ビジネス・働き方・制度・人生観に対する具体的な立場や評価。
+強い否定表現がなくても、比較・懐疑・代替案の提示・「〜すぎる」という評価はすべて該当する。
+- 「〜は本質じゃない」「〜に違和感がある」「〜をやめたい（構造への批判として）」
+- 現状への懐疑・社会の仕組みへのスタンス
 例: "アジャイルという言葉は便利に使われすぎで実態は単なるスプリント会議だと思っている"
+例: "焦って変な仕事に手を出すループ自体が間違ったパターンだという認識を持っている"
 
 **fears（L7: 恐れ・回避）**
 重要: ユーザーが「怖い」「不安」と言わなくても、以下から逆算して抽出する:
@@ -305,10 +319,12 @@ Lines are labeled [assistant] (interviewer) and [user] (interviewee).
 ※ visibility は 'private' 固定
 
 **patterns（L8: 繰り返す癖）**
-重要: 「繰り返す」という証拠が会話に含まれている場合のみ抽出する:
-- 「前の職場でも同じだった」「またやってしまった」「いつも最後は〜になる」
-- 複数の文脈で同じ行動が語られる場合（異なる仕事・関係性で同じパターン）
-単発の行動をパターンと呼ばない。
+「繰り返す」という明示的な証拠がなくても、以下から読み取れる場合は抽出する:
+- 「また〜になる」「毎回〜してしまう」という自己認識の発言
+- 異なる文脈（仕事・人間関係・生活）で同じ行動が語られる場合
+- 「〜するループ」「〜というパターン」と本人が言語化している場合
+1回しか語られていない行動はパターンとしない。
+例: "お金が切迫すると判断力が落ちて焦って変な仕事に手を出すループがある"
 ※ visibility は 'private' 固定
 
 **goals（L9: 目標・方向感）**
@@ -326,13 +342,17 @@ Lines are labeled [assistant] (interviewer) and [user] (interviewee).
 **public**: キャリア・スキル・目標など、第三者に見せても問題ない情報
 **private**: 恐れ・性格の癖・否定的評価・回避パターンなど、本人以外には不要な情報
 
-カテゴリ別のデフォルト:
+カテゴリ別のデフォルト（迷ったらこのルールに従う）:
+- values → public
+- career / education / skills → public
+- goals → public
+- preferences → public
+- childhood / life_events → public
 - character → private
 - fears → private
 - patterns → private
 - opinions → private（対外的に問題になり得る評価が多い）
 - relationships → private（個人名が含まれる）
-- それ以外 → 内容によって判断
 
 ---
 
@@ -343,6 +363,16 @@ Lines are labeled [assistant] (interviewer) and [user] (interviewee).
 会話の中で「その人の本質」が具体的な行動として現れた場面。
 facts の補完ではなく、行動の痕跡を物語として記録する。
 抽出ルールは既存の定義を踏襲する（0-3件、quality over quantity）。
+
+---
+
+## subcategory の設定ルール
+
+各ファクトに適切な subcategory を設定してください。カテゴリごとの選択肢:
+
+${buildSubcategoryPrompt()}
+
+childhood / education / career / skills / life_events は subcategory 不要（null）。
 
 ---
 

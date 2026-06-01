@@ -35,6 +35,9 @@ const SEED_QUESTIONS = [
   // L5: 関係性パターン
   { id: 'q28', category: 'relationships', content: '今まで「この人とは合わなかった」と感じた人には、共通点がありましたか？', priority: 7 },
   { id: 'q29', category: 'relationships', content: '自然と長く付き合いが続く人と、なぜか疎遠になってしまう人の違いは何だと思いますか？', priority: 7 },
+  { id: 'q42', category: 'relationships', content: '一緒にいると自然とエネルギーが湧いてくる人は、どんな特徴を持っていますか？', priority: 8 },
+  { id: 'q43', category: 'relationships', content: '信頼できる人かどうかを判断するとき、どんなことを見ていますか？', priority: 8 },
+  { id: 'q44', category: 'relationships', content: '過去に「この人がいなかったら今の自分はなかった」と思う人はいますか？どんな関わりでしたか？', priority: 9 },
 
   // L6: 意見・スタンス
   { id: 'q30', category: 'opinions', content: '「世の中的には正しいとされているけど、自分は懐疑的だ」と思っていることはありますか？', priority: 8 },
@@ -87,6 +90,9 @@ const EN_TRANSLATIONS: { questionId: string; content: string }[] = [
   { questionId: 'q27', content: 'Is there something that others seem fine with but that you genuinely can\'t stand?' },
   { questionId: 'q28', content: 'Looking back at people you\'ve worked or lived with, were there common traits among those who just didn\'t click with you?' },
   { questionId: 'q29', content: 'What\'s the difference between people you naturally stay close to over the years, and those you drift apart from?' },
+  { questionId: 'q42', content: 'What traits do people who energize you naturally tend to have?' },
+  { questionId: 'q43', content: 'What do you look for when deciding whether someone is trustworthy?' },
+  { questionId: 'q44', content: 'Is there someone without whom you feel you wouldn\'t be who you are today? What was your relationship like?' },
   { questionId: 'q30', content: 'Is there something widely accepted as right or true that you\'re quietly skeptical about?' },
   { questionId: 'q31', content: 'In your work or field, is there something you think is overrated or overhyped?' },
   { questionId: 'q32', content: 'Have you ever thought about a common workplace practice — meetings, hiring, reviews — and wondered if it\'s really necessary?' },

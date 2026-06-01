@@ -1,0 +1,15 @@
+export const CATEGORY_TO_LAYER: Record<string, string> = {
+  values: 'L1',
+  character: 'L2',
+  childhood: 'L3',
+  life_events: 'L3',
+  career: 'L4',
+  education: 'L4',
+  skills: 'L4',
+  relationships: 'L5',
+  opinions: 'L6',
+  fears: 'L7',
+  patterns: 'L8',
+  goals: 'L9',
+  preferences: 'L10',
+}

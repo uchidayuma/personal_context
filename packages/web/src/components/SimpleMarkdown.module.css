@@ -1,0 +1,32 @@
+.root {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #333;
+}
+.h1 { font-size: 16px; font-weight: 700; margin: 12px 0 6px; }
+.h2 { font-size: 14px; font-weight: 700; margin: 10px 0 5px; }
+.h3 { font-size: 13px; font-weight: 700; margin: 8px 0 4px; }
+.p  { margin: 4px 0; }
+.blockquote {
+  border-left: 3px solid #ddd;
+  margin: 6px 0;
+  padding-left: 12px;
+  color: #666;
+}
+.ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.ul li { margin-bottom: 2px; }
+.table {
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 8px 0;
+  width: 100%;
+}
+.table th, .table td {
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  text-align: left;
+}
+.table th { background: #f5f5f5; font-weight: 700; }

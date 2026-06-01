@@ -1,4 +1,4 @@
-import { eq, and, notInArray, desc, asc, sql } from 'drizzle-orm'
+import { eq, and, notInArray, inArray, desc, asc, sql, count } from 'drizzle-orm'
 import { DEFAULT_USER_ID, getUserLanguage } from '../db/client.js'
 import type { Db } from '../types.js'
 import {
@@ -15,24 +15,40 @@ import {
 const MAX_QUESTIONS_PER_SESSION = 3
 const MAX_FOLLOWUPS_PER_QUESTION = 1
 
+// L1〜L10 各カテゴリの充足閾値（progress.ts と揃える）
+const CATEGORY_THRESHOLDS: Record<string, number> = {
+  values: 5, character: 3, relationships: 5, opinions: 5,
+  fears: 3, patterns: 3, goals: 3, preferences: 3,
+  childhood: 3, life_events: 3, career: 4, education: 3, skills: 2,
+}
+
 async function selectNextQuestion(db: Db, userId: string, language: string) {
-  const answered = db
+  // 回答済み質問ID
+  const answeredRows = await db
     .select({ questionId: userQuestions.questionId })
     .from(userQuestions)
     .where(eq(userQuestions.userId, userId))
+  const answeredIds = answeredRows.map(r => r.questionId)
 
-  const coveredCategories = db
-    .selectDistinct({ category: structuredFacts.category })
+  // カテゴリ別の現在件数
+  const factCountRows = await db
+    .select({ category: structuredFacts.category, cnt: count() })
     .from(structuredFacts)
     .where(eq(structuredFacts.userId, userId))
+    .groupBy(structuredFacts.category)
+  const factCounts: Record<string, number> = {}
+  for (const row of factCountRows) factCounts[row.category] = row.cnt
 
-  // 空カテゴリの質問を優先（1）、それ以外はpriority順
-  const emptyFirst = sql<number>`CASE WHEN ${questions.category} NOT IN (${coveredCategories}) THEN 1 ELSE 0 END`
+  // 候補質問を全取得（翻訳あれば翻訳を使用）
+  const whereClause = answeredIds.length > 0
+    ? and(eq(questions.isActive, true), notInArray(questions.id, answeredIds))
+    : eq(questions.isActive, true)
 
-  // 翻訳があれば翻訳を、なければデフォルト(ja)の content を使う
-  const [next] = await db
+  const candidates = await db
     .select({
       id: questions.id,
+      category: questions.category,
+      priority: questions.priority,
       content: sql<string>`COALESCE(${questionTranslations.content}, ${questions.content})`,
     })
     .from(questions)
@@ -43,14 +59,47 @@ async function selectNextQuestion(db: Db, userId: string, language: string) {
         eq(questionTranslations.language, language),
       ),
     )
-    .where(and(
-      eq(questions.isActive, true),
-      notInArray(questions.id, answered),
-    ))
-    .orderBy(desc(emptyFirst), desc(questions.priority))
-    .limit(1)
+    .where(whereClause)
 
-  return next ?? null
+  if (candidates.length === 0) return null
+
+  // 充足率（現在件数 / 閾値）が低いカテゴリの質問を優先し、同率なら priority 降順
+  candidates.sort((a, b) => {
+    const ratioA = (factCounts[a.category] ?? 0) / (CATEGORY_THRESHOLDS[a.category] ?? 3)
+    const ratioB = (factCounts[b.category] ?? 0) / (CATEGORY_THRESHOLDS[b.category] ?? 3)
+    if (ratioA !== ratioB) return ratioA - ratioB
+    return b.priority - a.priority
+  })
+
+  return { id: candidates[0].id, content: candidates[0].content }
+}
+
+export type SessionSummary = { facts: Record<string, number>; timeline: number; vignettes: string[] }
+
+export async function buildSessionSummary(db: Db, sessionId: string): Promise<SessionSummary> {
+  const logs = await db.select({ id: rawLogs.id }).from(rawLogs).where(eq(rawLogs.sessionId, sessionId))
+  const logIds = logs.map(l => l.id)
+
+  const [savedFacts, savedTimeline, savedVignettes] = await Promise.all([
+    logIds.length === 0 ? [] : db
+      .selectDistinct({ id: structuredFacts.id, category: structuredFacts.category })
+      .from(structuredFacts)
+      .innerJoin(factEvidences, eq(factEvidences.factId, structuredFacts.id))
+      .where(inArray(factEvidences.logId, logIds)),
+    logIds.length === 0 ? [] : db
+      .selectDistinct({ id: lifeTimeline.id })
+      .from(lifeTimeline)
+      .innerJoin(timelineEvidences, eq(timelineEvidences.timelineId, lifeTimeline.id))
+      .where(inArray(timelineEvidences.logId, logIds)),
+    db.select({ title: sessionVignettes.title }).from(sessionVignettes).where(eq(sessionVignettes.sessionId, sessionId)),
+  ])
+
+  const facts = savedFacts.reduce<Record<string, number>>((acc, f) => {
+    acc[f.category] = (acc[f.category] ?? 0) + 1
+    return acc
+  }, {})
+
+  return { facts, timeline: savedTimeline.length, vignettes: savedVignettes.map(v => v.title) }
 }
 
 async function getExistingFactsSummary(db: Db, userId: string): Promise<string> {
@@ -131,7 +180,7 @@ function buildSystemPrompt(
 ${existingFacts}
 
 ## Goal of follow-up
-When the user gives an abstract answer, ask for ONE concrete detail — a specific action, moment, or choice. Don't push for the full story; one grounding detail is enough.
+This is a context-building tool, not a therapy session. When the user's answer is vague, ask ONE short clarifying question to record a specific data point (a role, a year, a concrete action). Once you have something recordable, move on — do not explore motivations or feelings further.
 
 ## Rules
 1. Respond in English. Keep your response SHORT — one brief acknowledgment sentence, then move on.
@@ -156,7 +205,7 @@ When the user gives an abstract answer, ask for ONE concrete detail — a specif
 ${existingFacts}
 
 ## フォローアップの目的
-ユーザーが抽象的な答えをした場合、具体的な行動・場面・選択を**1つだけ**引き出す。全体像を無理に聞き出す必要はない。1つのディテールが取れれば十分。
+これはセラピーではなくコンテキスト収集ツールです。ユーザーの答えが曖昧な場合、記録できる具体的なデータ（役職・時期・具体的な行動など）を1つ引き出す短い質問をする。記録できるものが取れたら、動機や感情の深掘りは一切せず次に進む。
 
 ## 行動ルール
 1. 必ず日本語で返答してください。返答は**短く**——共感1文＋次のアクション。
@@ -227,13 +276,14 @@ export async function processMessage(
   sessionId: string,
   userId = DEFAULT_USER_ID,
   userMessage: string,
+  languageOverride?: string,
 ) {
   const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
   if (!session || session.status !== 'active') {
     throw new Error('Session not found or already ended')
   }
 
-  const language = await getUserLanguage(db, userId)
+  const language = languageOverride ?? await getUserLanguage(db, userId)
 
   await db.insert(rawLogs).values({
     id: crypto.randomUUID(),
@@ -301,12 +351,25 @@ export async function processMessage(
       ? false
       : rawAskedFollowup
 
+  // When moving to the next question, append it to the response so the user
+  // sees the actual question rather than just a transition phrase.
+  let finalResponse = response
+  let nextQuestion: { id: string; content: string } | null = null
+
+  if (!shouldEndSession && !askedFollowup) {
+    nextQuestion = await selectNextQuestion(db, userId, language)
+    if (nextQuestion) {
+      const nextMsg = await transformToCoachingTone(nextQuestion.content, existingFacts, language)
+      finalResponse = response + '\n\n' + nextMsg
+    }
+  }
+
   await db.insert(rawLogs).values({
     id: crypto.randomUUID(),
     userId,
     sessionId,
     role: 'assistant',
-    content: response,
+    content: finalResponse,
   })
 
   if (shouldEndSession) {
@@ -332,11 +395,14 @@ export async function processMessage(
     } catch (err) {
       console.error('Failed to extract facts from conversation:', err)
     }
+
+    const summary = await buildSessionSummary(db, sessionId).catch(() => ({ facts: {}, timeline: 0, vignettes: [] as string[] }))
+    const remainingTurns = session.type === 'onboarding' ? null : MAX_QUESTIONS_PER_SESSION - session.questionsAsked
+    return { response: finalResponse, shouldEnd: true, remainingTurns, summary }
   } else if (!askedFollowup) {
     if (session.currentQuestionId) {
       await db.insert(userQuestions).values({ userId, questionId: session.currentQuestionId }).onConflictDoNothing()
     }
-    const nextQuestion = await selectNextQuestion(db, userId, language)
     await db.update(sessions)
       .set({
         questionsAsked: session.questionsAsked + 1,
@@ -354,7 +420,7 @@ export async function processMessage(
     ? null
     : MAX_QUESTIONS_PER_SESSION - session.questionsAsked
 
-  return { response, shouldEnd: shouldEndSession, remainingTurns }
+  return { response: finalResponse, shouldEnd: shouldEndSession, remainingTurns }
 }
 
 export async function endSession(db: Db, sessionId: string, userId = DEFAULT_USER_ID) {
@@ -449,6 +515,7 @@ async function extractAndSaveFacts(db: Db, sessionId: string, userId: string, co
     await db.insert(structuredFacts).values({
       id: factId, userId,
       category: fact.category,
+      subcategory: fact.subcategory ?? null,
       fact: fact.fact,
       confidenceScore: fact.confidence_score,
       visibility: fact.visibility,
@@ -485,6 +552,7 @@ async function extractAndSaveFacts(db: Db, sessionId: string, userId: string, co
       scene: vignette.scene,
       insight: vignette.insight,
       selfGap: vignette.self_gap ?? undefined,
+      visibility: 'public',
     })
   }
 }

@@ -4,8 +4,7 @@
     "nav": {
       "interview": "インタビュー",
       "myContext": "マイコンテキスト",
-      "exportPublic": "エクスポート（公開）",
-      "exportAll": "エクスポート（全て）"
+      "export": "エクスポート"
     },
     "demo": {
       "notice": "デモ版：タブを閉じるとデータが消えます。続けて使うには",
@@ -25,7 +24,9 @@
     "typing": "入力中...",
     "sessionEnded": "セッションが終了しました。",
     "newSession": "新しいセッションを開始",
+    "summaryTitle": "今回記録された情報",
     "endSession": "終了",
+    "endSessionTooltip": "セッションを終了して情報を保存する",
     "skip": "この質問をパス →",
     "recordStop": "録音停止",
     "transcribing": "変換中...",

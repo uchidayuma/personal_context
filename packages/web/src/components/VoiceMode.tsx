@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
 import styles from './VoiceMode.module.css'
 
-type Phase = 'idle' | 'recording' | 'processing' | 'speaking'
+type Phase = 'idle' | 'listening' | 'processing' | 'speaking'
 
 interface Props {
   sessionId: string
@@ -28,14 +28,17 @@ export default function VoiceMode({
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('')
   const langCode = language === 'ja' ? 'ja-JP' : 'en-US'
 
+  // Ref so async callbacks always see the latest version
+  const beginListeningRef = useRef(() => {})
+  // Set to true immediately when session ends to stop any in-flight VAD transcription
+  const sessionEndedRef = useRef(false)
+
   useEffect(() => {
     function loadVoices() {
       const all = window.speechSynthesis.getVoices()
       const filtered = all.filter(v => v.lang.startsWith(language === 'ja' ? 'ja' : 'en'))
       setVoices(filtered)
-      if (filtered.length > 0 && !selectedVoiceName) {
-        setSelectedVoiceName(filtered[0].name)
-      }
+      if (filtered.length > 0 && !selectedVoiceName) setSelectedVoiceName(filtered[0].name)
     }
     loadVoices()
     window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
@@ -57,7 +60,11 @@ export default function VoiceMode({
   }
 
   const voice = useVoiceInput(async (text) => {
-    if (!text.trim()) { setPhase('idle'); return }
+    // Discard if session already ended (e.g. VAD picked up TTS bleedthrough)
+    if (sessionEndedRef.current) return
+    // Empty transcription = false positive noise; restart listening
+    if (!text.trim()) { beginListeningRef.current(); return }
+
     setUserText(text)
     setPhase('processing')
     setFetchError(null)
@@ -66,54 +73,63 @@ export default function VoiceMode({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, message: text }),
+        body: JSON.stringify({ sessionId, message: text, language }),
       })
       const data = await res.json() as { response: string; shouldEnd: boolean }
       onExchange(text, data.response)
       setCoachText(data.response)
 
       if (data.shouldEnd) {
+        sessionEndedRef.current = true
         speak(data.response, () => { onEnd(); onClose() })
       } else {
-        speak(data.response, () => setPhase('idle'))
+        speak(data.response, () => beginListeningRef.current())
       }
     } catch {
       setFetchError(t('voice.networkError'))
-      setPhase('idle')
+      beginListeningRef.current()
     }
   })
 
+  // Always up-to-date: start listening if session is still active
+  beginListeningRef.current = () => {
+    if (!ended && !sessionEndedRef.current) {
+      setPhase('listening')
+      void voice.startListening(language)
+    } else {
+      setPhase('idle')
+    }
+  }
+
+  // Kick off: speak initial message → then auto-listen
   useEffect(() => {
-    if (initialCoachMessage) speak(initialCoachMessage, () => setPhase('idle'))
-    return () => { window.speechSynthesis.cancel() }
+    if (initialCoachMessage) {
+      speak(initialCoachMessage, () => beginListeningRef.current())
+    } else {
+      beginListeningRef.current()
+    }
+    return () => {
+      window.speechSynthesis.cancel()
+      voice.stopListening()
+    }
   }, [])
 
   const displayPhase: Phase =
-    voice.isRecording ? 'recording'
-    : voice.isTranscribing || phase === 'processing' ? 'processing'
+    voice.isTranscribing || phase === 'processing' ? 'processing'
     : phase
 
-  const canRecord = displayPhase === 'idle' && !ended
-
   const PHASE_LABEL: Record<Phase, string> = {
-    idle: ended ? t('voice.sessionEnded') : t('voice.pressToSpeak'),
-    recording: t('voice.listening'),
+    idle:       ended ? t('voice.sessionEnded') : '...',
+    listening:  t('voice.listening'),
     processing: t('voice.processing'),
-    speaking: t('voice.speaking'),
-  }
-
-  const MIC_ICON: Record<Phase, string> = {
-    idle: '🎤',
-    recording: '⏹',
-    processing: '⏳',
-    speaking: '🔊',
+    speaking:   t('voice.speaking'),
   }
 
   return (
     <div className={styles.overlay}>
       <button
         className={styles.closeBtn}
-        onClick={() => { window.speechSynthesis.cancel(); onClose() }}
+        onClick={() => { window.speechSynthesis.cancel(); voice.stopListening(); onClose() }}
       >
         {t('voice.backToText')}
       </button>
@@ -146,18 +162,8 @@ export default function VoiceMode({
       )}
 
       <div className={styles.micArea}>
+        <div className={`${styles.orb} ${styles[`orb_${displayPhase}`]}`} />
         <p className={styles.phaseLabel}>{PHASE_LABEL[displayPhase]}</p>
-
-        <button
-          className={`${styles.micBtn} ${styles[`micBtn_${displayPhase}`]}`}
-          onPointerDown={() => canRecord && voice.start(language)}
-          onPointerUp={() => voice.isRecording && voice.stop()}
-          onPointerLeave={() => voice.isRecording && voice.stop()}
-          disabled={!canRecord}
-        >
-          {MIC_ICON[displayPhase]}
-        </button>
-
         {(voice.error || fetchError) && (
           <p className={styles.error}>{voice.error ?? fetchError}</p>
         )}

@@ -117,6 +117,64 @@ Paste into any LLM — selectively, by topic
 
 CORE files go into every system prompt. SHAPE and STATE files are loaded selectively — pass only what the conversation needs.
 
+→ See [`output_example/`](output_example/) for real exported files.
+
+---
+
+## MCP Server — Use Your Context Anywhere
+
+Build your context once, then connect it to any AI tool via the **MCP (Model Context Protocol) server**.
+
+```bash
+# Build the MCP server
+pnpm --filter @personal-context/mcp build
+```
+
+### Claude Code
+
+Add to `.claude/settings.json` in your project:
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Cursor / Cline / Codex CLI
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+Once connected, any AI tool can call `get_context` to load your personal context. CORE layers load automatically — SHAPE/STATE layers are fetched as needed.
+
 ---
 
 ## Design Philosophy

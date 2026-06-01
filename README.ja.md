@@ -135,6 +135,64 @@ LLMが抽出：事実 + 年表 + ヴィネット
 
 COREファイルはすべてのシステムプロンプトに入れる。SHAPEとSTATEは選択的に——その会話に必要なものだけ渡す。
 
+→ 実際のエクスポートサンプルは [`output_example/`](output_example/) を参照。
+
+---
+
+## MCPサーバー — どのAIツールからでも使える
+
+コンテキストを一度育てたら、**MCPサーバー**経由でどのAIツールにも接続できます。
+
+```bash
+# MCPサーバーをビルド
+pnpm --filter @personal-context/mcp build
+```
+
+### Claude Code
+
+プロジェクトの `.claude/settings.json` に追加：
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+`~/Library/Application Support/Claude/claude_desktop_config.json` に追加：
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Cursor / Cline / Codex CLI
+
+```json
+{
+  "mcpServers": {
+    "personal_context": {
+      "command": "node",
+      "args": ["/path/to/personal_context/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+接続後、AIツールは `get_context` を呼び出してあなたのコンテキストを取得します。COREレイヤーは自動的に読み込まれ、SHAPE/STATEレイヤーは必要に応じて取得されます。
+
 ---
 
 ## 設計哲学

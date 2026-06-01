@@ -4,8 +4,7 @@
     "nav": {
       "interview": "Interview",
       "myContext": "My Context",
-      "exportPublic": "Export (Public)",
-      "exportAll": "Export (All)"
+      "export": "Export"
     },
     "demo": {
       "notice": "Demo: data clears when you close the tab. To keep your data,",
@@ -25,7 +24,9 @@
     "typing": "Typing...",
     "sessionEnded": "The session has ended.",
     "newSession": "Start a new session",
+    "summaryTitle": "Recorded this session",
     "endSession": "End",
+    "endSessionTooltip": "End session and save recorded info",
     "skip": "Skip this question →",
     "recordStop": "Stop recording",
     "transcribing": "Transcribing...",

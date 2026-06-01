@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import { startSession, startOnboarding, endSession, skipQuestion } from '../interview/engine.js'
+
+import { startSession, startOnboarding, endSession, skipQuestion, buildSessionSummary } from '../interview/engine.js'
 import { checkDemoRateLimit } from '../db/client.js'
 import type { AppVariables } from '../types.js'
 
@@ -32,17 +33,35 @@ sessionsRoute.post('/onboarding', async (c) => {
   }
 })
 
+
 sessionsRoute.post('/:id/end', async (c) => {
   const sessionId = c.req.param('id')
+  const db = c.get('db')
   try {
-    await endSession(c.get('db'), sessionId, c.get('userId'))
-    return c.json({ ok: true })
+    await endSession(db, sessionId, c.get('userId'))
   } catch (err) {
     if (err instanceof Error && err.message.includes('Session not found')) {
       return c.json({ error: err.message }, 404)
     }
+    // セッションが既に completed の場合（shouldEnd による自動終了済み）はサマリーだけ返す
+    if (err instanceof Error && err.message.includes('already ended')) {
+      try {
+        const summary = await buildSessionSummary(db, sessionId)
+        return c.json({ ok: true, summary })
+      } catch {
+        return c.json({ ok: true, summary: { facts: {}, timeline: 0, vignettes: [] } })
+      }
+    }
     console.error(err)
     return c.json({ error: 'Failed to end session' }, 500)
+  }
+
+  try {
+    const summary = await buildSessionSummary(db, sessionId)
+    return c.json({ ok: true, summary })
+  } catch (err) {
+    console.error(err)
+    return c.json({ ok: true, summary: { facts: {}, timeline: 0, vignettes: [] } })
   }
 })
 

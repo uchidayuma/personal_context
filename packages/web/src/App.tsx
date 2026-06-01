@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import SimpleMarkdown from './components/SimpleMarkdown.js'
 import Chat from './components/Chat.js'
 import Onboarding from './components/Onboarding.js'
 import ContextDashboard from './components/ContextDashboard.js'
@@ -15,33 +16,59 @@ interface ExportFiles {
   l04Professional: string
   l05Relationships: string
   l06Opinions: string
-  l07Fears: string | null
-  l08Patterns: string | null
+  l07Fears: string
+  l08Patterns: string
   l09Goals: string
   l10Preferences: string
   lifeChapters: string
 }
 
-const FILE_LABELS: { key: keyof ExportFiles; name: string }[] = [
-  { key: 'index', name: '_index.md' },
-  { key: 'lifeChapters', name: 'life_chapters.md' },
-  { key: 'l01Values', name: 'L01_values.md' },
-  { key: 'l02Character', name: 'L02_character.md' },
-  { key: 'l03LifeTimeline', name: 'L03_life_timeline.md' },
-  { key: 'l04Professional', name: 'L04_professional.md' },
-  { key: 'l05Relationships', name: 'L05_relationships.md' },
-  { key: 'l06Opinions', name: 'L06_opinions.md' },
-  { key: 'l07Fears', name: 'L07_fears.md' },
-  { key: 'l08Patterns', name: 'L08_patterns.md' },
-  { key: 'l09Goals', name: 'L09_goals.md' },
-  { key: 'l10Preferences', name: 'L10_preferences.md' },
+interface ExportSection {
+  heading: string
+  facts: string[]
+}
+
+interface ExportLayer {
+  key: string
+  filename: string
+  title: string
+  zone: string
+  sections: ExportSection[]
+  other: string[]
+  markdown: string
+}
+
+const ZONE_COLORS: Record<string, string> = {
+  CORE: '#e94560',
+  SHAPE: '#0f6',
+  STATE: '#4af',
+}
+
+type ExportItemDef =
+  | { type: 'special'; key: keyof ExportFiles; name: string }
+  | { type: 'layer'; key: string }
+
+const EXPORT_ORDER: ExportItemDef[] = [
+  { type: 'special', key: 'index',           name: '_index.md' },
+  { type: 'special', key: 'lifeChapters',    name: 'life_chapters.md' },
+  { type: 'layer',   key: 'l01Values' },
+  { type: 'layer',   key: 'l02Character' },
+  { type: 'special', key: 'l03LifeTimeline', name: 'L03_life_timeline.md' },
+  { type: 'special', key: 'l04Professional', name: 'L04_professional.md' },
+  { type: 'layer',   key: 'l05Relationships' },
+  { type: 'layer',   key: 'l06Opinions' },
+  { type: 'layer',   key: 'l07Fears' },
+  { type: 'layer',   key: 'l08Patterns' },
+  { type: 'layer',   key: 'l09Goals' },
+  { type: 'layer',   key: 'l10Preferences' },
 ]
 
 export default function App() {
   const { t, i18n } = useTranslation()
   const [view, setView] = useState<View>('chat')
   const [exportFiles, setExportFiles] = useState<ExportFiles | null>(null)
-  const [copiedKey, setCopiedKey] = useState<keyof ExportFiles | null>(null)
+  const [exportLayers, setExportLayers] = useState<ExportLayer[]>([])
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/user')
@@ -66,17 +93,15 @@ export default function App() {
     i18n.changeLanguage(lang)
   }
 
-  async function handleExport(includePrivate: boolean) {
-    const res = await fetch(`/api/export?visibility=${includePrivate ? 'all' : 'public'}`)
-    const data = await res.json() as { files: ExportFiles }
+  async function handleExport() {
+    const res = await fetch('/api/export')
+    const data = await res.json() as { files: ExportFiles; layers: ExportLayer[] }
     setExportFiles(data.files)
+    setExportLayers(data.layers ?? [])
     setView('export')
   }
 
-  async function copyFile(key: keyof ExportFiles) {
-    if (!exportFiles) return
-    const content = exportFiles[key]
-    if (!content) return
+  async function copyContent(key: string, content: string) {
     await navigator.clipboard.writeText(content)
     setCopiedKey(key)
     setTimeout(() => setCopiedKey(null), 1500)
@@ -111,18 +136,11 @@ export default function App() {
             {t('app.nav.myContext')}
           </button>
           <button
-            onClick={() => handleExport(false)}
+            onClick={() => handleExport()}
             disabled={onboarding}
-            className={styles.navBtn}
+            className={`${styles.navBtn} ${view === 'export' ? styles.navBtnActive : ''}`}
           >
-            {t('app.nav.exportPublic')}
-          </button>
-          <button
-            onClick={() => handleExport(true)}
-            disabled={onboarding}
-            className={styles.navBtn}
-          >
-            {t('app.nav.exportAll')}
+            {t('app.nav.export')}
           </button>
           <div className={styles.langGroup}>
             {['ja', 'en'].map(lang => (
@@ -144,20 +162,79 @@ export default function App() {
         {view === 'dashboard' && <ContextDashboard onStartInterview={() => setView('chat')} />}
         {view === 'export' && exportFiles && (
           <div className={styles.exportGrid}>
-            {FILE_LABELS.filter(({ key }) => exportFiles[key] !== null).map(({ key, name }) => (
-              <div key={key} className={styles.exportCard}>
-                <div className={styles.exportCardHeader}>
-                  <span className={styles.exportFilename}>{name}</span>
-                  <button
-                    onClick={() => copyFile(key)}
-                    className={`${styles.copyBtn} ${copiedKey === key ? styles.copyBtnSuccess : ''}`}
-                  >
-                    {copiedKey === key ? '✓ Copied' : t('export.copy')}
-                  </button>
-                </div>
-                <pre className={styles.exportContent}>{exportFiles[key]}</pre>
-              </div>
-            ))}
+            {(() => {
+              const layerMap = Object.fromEntries(exportLayers.map(l => [l.key, l]))
+              return EXPORT_ORDER.map((item) => {
+                if (item.type === 'special') {
+                  return (
+                    <div key={item.key} className={styles.exportCard}>
+                      <div className={styles.exportCardHeader}>
+                        <span className={styles.exportFilename}>{item.name}</span>
+                        <button
+                          onClick={() => copyContent(item.key, exportFiles[item.key])}
+                          className={`${styles.copyBtn} ${copiedKey === item.key ? styles.copyBtnSuccess : ''}`}
+                        >
+                          {copiedKey === item.key ? '✓ Copied' : t('export.copy')}
+                        </button>
+                      </div>
+                      <div className={styles.exportContent}>
+                    <SimpleMarkdown>{exportFiles[item.key]}</SimpleMarkdown>
+                  </div>
+                    </div>
+                  )
+                }
+                const layer = layerMap[item.key]
+                if (!layer) return null
+                const isEmpty = layer.sections.length === 0 && layer.other.length === 0
+                return (
+                  <div key={layer.key} className={styles.exportCard}>
+                    <div className={styles.exportCardHeader}>
+                      <span className={styles.exportFilename}>{layer.filename}</span>
+                      <span
+                        className={styles.zoneTag}
+                        style={{ background: ZONE_COLORS[layer.zone] ?? '#888' }}
+                      >
+                        {layer.zone}
+                      </span>
+                      <button
+                        onClick={() => copyContent(layer.key, layer.markdown)}
+                        className={`${styles.copyBtn} ${copiedKey === layer.key ? styles.copyBtnSuccess : ''}`}
+                      >
+                        {copiedKey === layer.key ? '✓ Copied' : t('export.copy')}
+                      </button>
+                    </div>
+                    <div className={styles.layerBody}>
+                      {isEmpty ? (
+                        <p className={styles.emptyNote}>No data collected yet.</p>
+                      ) : (
+                        <>
+                          {layer.sections.map((sec) => (
+                            <div key={sec.heading} className={styles.layerSection}>
+                              <h3 className={styles.sectionHeading}>{sec.heading}</h3>
+                              <ul className={styles.factList}>
+                                {sec.facts.map((fact, i) => (
+                                  <li key={i}>{fact}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                          {layer.other.length > 0 && (
+                            <div className={styles.layerSection}>
+                              <h3 className={styles.sectionHeading}>その他</h3>
+                              <ul className={styles.factList}>
+                                {layer.other.map((fact, i) => (
+                                  <li key={i}>{fact}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
           </div>
         )}
       </main>

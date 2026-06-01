@@ -583,6 +583,46 @@ components:
             lifeChapters:
               type: string
               description: life_chapters.md — Vignettes（行動の証拠集）
+        layers:
+          type: array
+          description: サブカテゴリ構造化済みのレイヤーデータ（L01/L02/L05-L10）
+          items:
+            type: object
+            required: [key, filename, title, zone, sections, other, markdown]
+            properties:
+              key:
+                type: string
+                example: l01Values
+              filename:
+                type: string
+                example: L01_values.md
+              title:
+                type: string
+                example: L1: Values & Beliefs（価値観・信念）
+              zone:
+                type: string
+                enum: [CORE, SHAPE, STATE]
+              sections:
+                type: array
+                items:
+                  type: object
+                  required: [heading, facts]
+                  properties:
+                    heading:
+                      type: string
+                      example: 譲れない価値観
+                    facts:
+                      type: array
+                      items:
+                        type: string
+              other:
+                type: array
+                description: サブカテゴリ未分類のファクト
+                items:
+                  type: string
+              markdown:
+                type: string
+                description: このレイヤーのMarkdownテキスト（コピー用）
 
     ProgressResponse:
       type: object

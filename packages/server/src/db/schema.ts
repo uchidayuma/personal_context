@@ -63,6 +63,7 @@ export const structuredFacts = sqliteTable('structured_facts', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   category: text('category').$type<StructuredFactCategory>().notNull(),
+  subcategory: text('subcategory'),
   fact: text('fact').notNull(),
   confidenceScore: real('confidence_score').notNull().default(0.8),
   visibility: text('visibility', { enum: ['public', 'private'] }).notNull().default('private'),

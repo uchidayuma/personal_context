@@ -119,6 +119,7 @@ importRoute.post('/', async (c) => {
       id: randomUUID(),
       userId,
       category: fact.category,
+      subcategory: fact.subcategory ?? null,
       fact: fact.fact,
       confidenceScore: 0.7,
       visibility: 'private',

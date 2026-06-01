@@ -76,6 +76,7 @@ const CREATE_TABLES_SQL = `
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     category TEXT NOT NULL,
+    subcategory TEXT,
     fact TEXT NOT NULL,
     confidence_score REAL NOT NULL DEFAULT 0.8,
     visibility TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('public', 'private')),
@@ -150,9 +151,20 @@ const CREATE_TABLES_SQL = `
   );
 `
 
+async function addColumnIfNotExists(c: typeof client, table: string, column: string, definition: string) {
+  const info = await c.execute(`PRAGMA table_info(${table})`)
+  const exists = info.rows.some((row) => row[1] === column)
+  if (!exists) {
+    await c.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
+}
+
 export async function initDatabase() {
   await client.executeMultiple(CREATE_TABLES_SQL)
   await simulateClient.executeMultiple(CREATE_TABLES_SQL)
+  for (const c of [client, simulateClient]) {
+    await addColumnIfNotExists(c, 'structured_facts', 'subcategory', 'TEXT')
+  }
 }
 
 export const DEFAULT_USER_ID = 'local_default_user'

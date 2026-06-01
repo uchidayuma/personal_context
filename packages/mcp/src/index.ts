@@ -2,9 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { exportToMarkdown, type ExportFiles } from '../../server/src/export/markdown.js'
-import { DEFAULT_USER_ID } from '../../server/src/db/client.js'
-
-const includePrivate = process.env.MCP_INCLUDE_PRIVATE !== 'false'
+import { db, DEFAULT_USER_ID } from '../../server/src/db/client.js'
 
 type ResourceSlug =
   | 'index' | 'life-chapters'
@@ -47,11 +45,11 @@ const RESOURCE_MAP: Record<ResourceSlug, { key: keyof ExportFiles; description: 
   },
   'fears': {
     key: 'l07Fears',
-    description: 'Fears and avoidance patterns (private). Relevant for understanding blockers or resistance.',
+    description: 'Fears and avoidance patterns. Relevant for understanding blockers or resistance to change.',
   },
   'patterns': {
     key: 'l08Patterns',
-    description: 'Recurring behavioral patterns, positive and negative (private). Use when diagnosing repeated problems.',
+    description: 'Recurring behavioral patterns, positive and negative. Use when diagnosing repeated problems.',
   },
   'goals': {
     key: 'l09Goals',
@@ -76,13 +74,13 @@ for (const [slug, meta] of Object.entries(RESOURCE_MAP) as [ResourceSlug, typeof
     `context://${slug}`,
     { description: meta.description, mimeType: 'text/markdown' },
     async () => {
-      const files = await exportToMarkdown(DEFAULT_USER_ID, includePrivate)
+      const files = await exportToMarkdown(db, DEFAULT_USER_ID)
       const content = files[meta.key]
       return {
         contents: [{
           uri: `context://${slug}`,
           mimeType: 'text/markdown',
-          text: content ?? '*This resource is not available (private content excluded).*',
+          text: content ?? '*No data available yet. Start an interview session first.*',
         }],
       }
     },
@@ -99,13 +97,9 @@ server.tool(
       'relationships', 'opinions', 'fears', 'patterns',
       'goals', 'preferences',
     ])).optional().describe('Layers to include. Defaults to CORE set: life-chapters, values, character.'),
-    include_private: z.boolean().optional().describe(
-      'Include private layers (fears, patterns). Defaults to server MCP_INCLUDE_PRIVATE setting.',
-    ),
   },
-  async ({ layers, include_private }) => {
-    const usePrivate = include_private ?? includePrivate
-    const files = await exportToMarkdown(DEFAULT_USER_ID, usePrivate)
+  async ({ layers }) => {
+    const files = await exportToMarkdown(db, DEFAULT_USER_ID)
     const requested = (layers ?? CORE_LAYERS) as ResourceSlug[]
 
     const parts: string[] = []
