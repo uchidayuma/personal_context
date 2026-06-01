@@ -2,10 +2,14 @@
 
 **あなたという人間を、AIが本当に理解できる形で記録する。どのLLMにも使える、あなた専用のコンテキストエンジン**
 
+![alt](https://github.com/user-attachments/assets/3dda5660-8ac2-44ef-9a59-acd3a1c0f7e4)
+
 自分コンテキストでは、2つの課題を解決します。
 
 1. 自分自身を理解する
 2. 特定のAIサービスに縛られない、**自分ファイル**を作る
+
+[最終アウトプット例はこちら](https://github.com/uchidayuma/personal_context/tree/main/output_example/ja)
 
 毎日少しずつインタビューに答えるだけで、自分自身を理解できる。
 

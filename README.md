@@ -1,5 +1,11 @@
 # Personal Context Engine
 
+![alt](https://github.com/user-attachments/assets/3dda5660-8ac2-44ef-9a59-acd3a1c0f7e4)
+
+*日本語 README: [README.ja.md](README.ja.md)*
+
+[Click here for final output example](https://github.com/uchidayuma/personal_context/tree/main/output_example/en)
+
 **Record yourself in a form any AI can truly understand — your personal context engine, portable to any LLM.**
 
 Personal Context solves two problems:
@@ -19,8 +25,6 @@ https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
-*日本語 README: [README.ja.md](README.ja.md)*
 
 ---
 
