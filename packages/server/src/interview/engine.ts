@@ -231,8 +231,8 @@ export async function startOnboarding(db: Db, userId = DEFAULT_USER_ID) {
   return { sessionId, message: opening }
 }
 
-export async function startSession(db: Db, userId = DEFAULT_USER_ID) {
-  const language = await getUserLanguage(db, userId)
+export async function startSession(db: Db, userId = DEFAULT_USER_ID, languageOverride?: string) {
+  const language = languageOverride ?? await getUserLanguage(db, userId)
   const question = await selectNextQuestion(db, userId, language)
   const existingFacts = await (async () => {
     const facts = await db

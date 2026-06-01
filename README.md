@@ -9,6 +9,8 @@ Personal Context solves two problems:
 
 Answer a few interview questions each day. The engine quietly builds a structured knowledge base of you — exportable as plain Markdown to Claude, ChatGPT, Cursor, or any LLM you choose.
 
+https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
+
 > For people who want sharper AI responses, or who want to capture themselves as a complete Markdown document.
 
 [![CI](https://github.com/uchidayuma/personal_context/actions/workflows/ci.yml/badge.svg)](https://github.com/uchidayuma/personal_context/actions/workflows/ci.yml)
@@ -23,7 +25,13 @@ Answer a few interview questions each day. The engine quietly builds a structure
 ---
 
 ## 3 core model
-![image](https://github.com/user-attachments/assets/c130d75d-6bc1-4251-aaf3-b9b113cdba59)
+![image](https://github.com/user-attachments/assets/dcbec033-1b1d-4910-93d2-addddd3fe231)
+
+| Layer | Depth | What it captures | Output Files |
+| :--- | :--- | :--- | :--- |
+| CORE | Deepest | Immutable values, core beliefs, and innate temperament. The foundation of "you". | `L01`, `L02` |
+| SHAPE | Medium | Acquired experiences, behavioral patterns, relationships, and distinct stances. | `L03` - `L08` |
+| STATE | Surface | Current goals, active projects, and immediate preferences for the session. | `L09`, `L10` |
 
 ## Live Demo
 
@@ -76,8 +84,21 @@ LLM_PROVIDER=ollama
 # OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=sk-ant-...
 # DEEPSEEK_API_KEY=sk-...
-# OLLAMA_BASE_URL=http://localhost:11434/v1  # optional, this is the default
+# OLLAMA_BASE_URL=http://host.docker.internal:11434/v1  # when running via Docker (default for Docker)
 ```
+
+**Estimated cost to build a complete context** (all L1–L10 layers, ~30–50 sessions):
+
+| Provider | Model | Estimated Cost |
+|---|---|---|
+| Ollama | any local model | **Free** |
+| OpenAI | gpt-4o-mini | ~$1 |
+| DeepSeek | deepseek-chat | ~$1.5 |
+| Anthropic | claude-haiku-3-5 | ~$5 |
+| OpenAI | gpt-4o | ~$15 |
+| Anthropic | claude-sonnet-3-5 | ~$20 |
+
+> Estimates based on actual usage. Costs vary with session length and language. Ollama runs locally — no API key needed.
 
 ```bash
 docker compose up

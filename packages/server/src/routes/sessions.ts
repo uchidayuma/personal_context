@@ -15,7 +15,8 @@ sessionsRoute.post('/', async (c) => {
     if (!allowed) return c.json({ error: '1日1セッションまでです。明日またお試しください。' }, 429)
   }
   try {
-    const { sessionId, message } = await startSession(c.get('db'), c.get('userId'))
+    const body = await c.req.json<{ language?: string }>().catch(() => ({}))
+    const { sessionId, message } = await startSession(c.get('db'), c.get('userId'), body.language)
     return c.json({ sessionId, message })
   } catch (err) {
     console.error(err)

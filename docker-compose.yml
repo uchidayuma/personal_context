@@ -6,6 +6,8 @@ services:
       target: server
     ports:
       - "3001:3001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./packages:/app/packages
       - ./data:/app/data

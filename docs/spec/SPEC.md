@@ -222,9 +222,16 @@ The OSS version has no authentication. On startup, a default user record (`id = 
 
 ### Migration strategy
 
-**Current (OSS):** Managed idempotently inside `initDatabase()` using `CREATE TABLE IF NOT EXISTS`. Column additions to existing DBs are handled by checking `PRAGMA table_info` before running `ALTER TABLE`.
+Managed via **drizzle-kit**. Migration SQL files live in `packages/server/drizzle/`.
 
-**Future (hosted):** Will migrate to drizzle-kit migration file management.
+- **Schema changes:** Edit `src/db/schema.ts`, then run `pnpm db:generate` to generate a new migration file.
+- **At startup:** `initDatabase()` calls `migrate(db, { migrationsFolder })` which applies any pending migrations automatically. Both the main DB and simulate DB go through the same migrations.
+- **Migration state:** Tracked in the `__drizzle_migrations` table inside each DB file.
+
+```bash
+pnpm --filter @personal-context/server db:generate   # generate migration from schema diff
+pnpm --filter @personal-context/server db:studio     # open Drizzle Studio (DB browser)
+```
 
 ---
 
