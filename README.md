@@ -149,6 +149,31 @@ CORE files go into every system prompt. SHAPE and STATE files are loaded selecti
 
 ---
 
+## What is a Vignette?
+
+A vignette is a behavioral scene — a specific moment where the person's character becomes visible through action.
+
+Instead of abstract labels:
+```
+values: freedom, autonomy
+```
+
+The engine captures scenes:
+```
+title:   "Wings grew from my feet" — a moment at Narita Airport
+quote:   "My body felt so light, like wings had grown from my feet.
+          I thought, 'This is how I want to live.' That was the moment I decided."
+scene:   Heading to Vietnam with just one backpack. The body felt astonishingly light.
+         That physical sensation became the confirmation of a life decision.
+insight: This person trusts bodily sensation as a compass for major life decisions.
+         The body's verdict overrides rational deliberation.
+```
+
+One vignette like this tells an LLM more about a person than ten bullet points of traits.
+Vignettes are stored in `life_chapters.md` and included in every context export.
+
+---
+
 ## MCP Server — Use Your Context Anywhere
 
 Build your context once, then connect it to any AI tool via the **MCP (Model Context Protocol) server**.
