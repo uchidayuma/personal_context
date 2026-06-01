@@ -22,6 +22,9 @@ Answer a few interview questions each day. The engine quietly builds a structure
 
 ---
 
+## 3 core model
+![image](https://github.com/user-attachments/assets/c130d75d-6bc1-4251-aaf3-b9b113cdba59)
+
 ## Live Demo
 
 **Try it without installing anything:** [personal-context.onrender.com](https://personal-context.onrender.com/)

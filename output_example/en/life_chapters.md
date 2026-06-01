@@ -1,139 +1,139 @@
-# Life Chapters（Vignettes）
+# Life Chapters (Vignettes)
 
-> Zone: **横断** — どのレイヤーにも属さない行動の証拠集
+> Zone: **Cross-cutting** — Behavioral evidence that spans all layers
 
 ## Scenes
 
-### 浪人時代の「肩書きゼロ」の心地よさ
+### The unexpected comfort of "no label" during the ronin year
 
-**period:** 浪人時代（推定2015-2016）
+**period:** Ronin year (est. 2015–2016)
 
-**quote:** "あの「誰にも評価されない感じ」がすごく心地よかったんですよね。あれが自分の原型だと思ってます。"
+**quote:** "That feeling of not being evaluated by anyone — it was strangely comfortable. I think that's where I come from."
 
-**scene:** 高校を卒業し、大学にも会社にも属さない1年間。周りは焦りや不安を感じる状況だが、本人は「誰にも評価されない」という状態に不思議な心地よさを覚えていた。後に振り返って、あの感覚が自分の原型だと認識している。
+**scene:** A year after high school graduation, belonging to neither a university nor a company. Everyone around them felt anxious or pressured, but they felt an unexpected ease in the state of "not being evaluated by anyone." Looking back, they recognize that feeling as the prototype of who they are.
 
-**insight:** 評価や肩書きから解放された状態を、不安ではなく心地よさとして感じるという逆説的な感覚が、この人の核にある。
-
----
-
-### 成田空港で感じた「足から羽が生えた」瞬間
-
-**period:** 2025年秋
-
-**quote:** "足から羽が生えたみたいに体が軽くて。「あ、これが自分の生き方だ」ってそのとき決めました。"
-
-**scene:** ベトナム旅行に向けて成田空港でバックパック1個だけを持って歩いた瞬間、身体が驚くほど軽くなる感覚を味わう。その感覚を「自分の生き方」だと確信し、その決断が現在の海外生活の起点となった。
-
-**insight:** 身体感覚を人生の判断基準として信頼し、その感覚に従って大きな決断を下すことができる人物である。
+**insight:** A paradoxical comfort with being released from evaluation and labels sits at the core of this person. Not having a title or rank isn't a source of anxiety — it's a source of relief.
 
 ---
 
-### お金の切迫と体の感覚のせめぎ合い
+### "Wings grew from my feet" — a moment at Narita Airport
 
-**period:** 現在（2025年以降）
+**period:** Autumn 2025
 
-**quote:** "体が「嫌だ」って言ってるのはわかってるんですよ。でもお金が切迫してくると、その感覚が遠くなっていく。頭が「とにかく稼がないと」モードになって。これ、ずっと繰り返してるパターンで。"
+**quote:** "My body felt so light, like wings had grown from my feet. I thought, 'This is how I want to live.' That was the moment I decided."
 
-**scene:** 東南アジアでフリーランスとして活動する中、ITエージェント経由の案件を見ると偽装請負の匂いがして首を縦に振れない。体は「嫌だ」と拒否しているが、経済的な切迫が迫るとその感覚が薄れ、頭が「稼がないと」モードに切り替わる。自分でもそのパターンを自覚している。
+**scene:** Heading to Vietnam, they walked through Narita Airport with just one backpack. Their body felt astonishingly light. They took that sensation as confirmation of "the way I want to live," and that decision became the starting point for their current life abroad.
 
-**insight:** 身体感覚を羅針盤としながらも、経済的プレッシャーがかかるとその羅針盤が狂うことを自覚しており、その葛藤が現在のテーマとなっている。
-
-**self_gap:** 「体の感覚に従う」という価値観を持ちながら、実際にはお金の切迫によってその感覚を手放しそうになる自分とのギャップを認識している。
+**insight:** This person trusts bodily sensation as a compass for major life decisions and acts on it. The body's verdict overrides rational deliberation.
 
 ---
 
-### 自由の迷いと一歩
+### The tug-of-war between financial pressure and bodily sensation
 
-**period:** 独立直後
+**period:** Ongoing (from 2025 onward)
 
-**quote:** "自由な反面、何から手を付けようか迷った"
+**quote:** "I know my body is saying 'no.' But when money gets tight, that feeling gets farther away. My head switches into 'just have to earn' mode. And I keep repeating this pattern."
 
-**scene:** 自分のプロダクトが全く売れず困っていたところ、知り合いの社長が小規模なサンプルアプリ開発の仕事をくれた。時間や場所に縛られず結果だけで評価される働き方に「ありがたい」と感じる一方、すべてを自分で決められる自由に戸惑い、何から手をつけるか迷った。
+**scene:** Working as a freelancer in Southeast Asia, they can smell the disguised-subcontracting structure in IT-agency jobs and can't say yes. The body rejects it clearly. But as economic pressure mounts, that signal fades and the head takes over with "just have to earn." They're aware of the pattern themselves.
 
-**insight:** 自由を求めながらも、完全な裁量には迷いが生じるという両面性を持っている。
+**insight:** They use bodily sensation as a compass, but are self-aware that financial pressure can knock that compass off course. This tension is the central theme of their life right now.
 
----
-
-### とりあえずやってみるで掴んだ手応え
-
-**period:** 独立直後
-
-**quote:** "とりあえずやってみるかな"
-
-**scene:** 何から手をつけるか迷いながらも、「とりあえずやってみる」と動き出し、先にプロトタイプを作って顧客に見せて修正するスタイルで進めた。結果的に顧客に満足してもらい、「先に作ってみて見せて修正した方がいい」という学びを得た。
-
-**insight:** 迷いよりも行動を優先する姿勢が、結果と学びを生み出す原動力になっている。
+**self_gap:** Holds the value of "follow your body's signals" — yet recognizes the gap between that value and the self who nearly abandons those signals when money gets tight.
 
 ---
 
-### AIとの対話から生まれた自己理解ツール
+### Freedom's paralysis, and the first step
 
-**period:** unknown
+**period:** Shortly after going independent
 
-**quote:** "AIがいい回答をくれないなあと思っていたんだけど、自分自身の情報を上手く与えられていなかったから"
+**quote:** "Free, but unsure where to start."
 
-**scene:** AIとの対話で満足いく回答が得られないことに frustration を感じていた。原因を探るうちに、AIに与える自分自身の情報が不足していることに気づき、自分を整理するツールを作ろうと思い立った。
+**scene:** Their own product wasn't selling at all. An acquaintance's company offered them a small sample-app development job. They felt grateful for outcome-based work with no location or time constraints — but the full autonomy of "everything is my decision" was disorienting. They weren't sure where to begin.
 
-**insight:** 問題の原因を外部（AI）ではなく、自分側の情報不足に帰着させ、それを解決する手段としてソフトウェア開発を選ぶ傾向がある。
+**insight:** They seek freedom but experience real paralysis when faced with total open-ended autonomy. Freedom has a shadow side.
 
 ---
 
-### 自由と自律のための独立
+### "Let's just try it" — the prototype that worked
+
+**period:** Shortly after going independent
+
+**quote:** "Let's just try it, I guess."
+
+**scene:** Still unsure where to start, they defaulted to action: "just try it." Built a prototype first, showed it to the client, and iterated. The client was satisfied. The lesson crystallized: "build first, show it, then revise."
+
+**insight:** Defaulting to action over deliberation generates both results and learning. This is the engine behind their momentum.
+
+---
+
+### A self-understanding tool born from frustration with AI
+
+**period:** Unknown
+
+**quote:** "I kept thinking AI wasn't giving me good answers — and then realized I hadn't been giving it good information about myself."
+
+**scene:** Frustrated by unsatisfying AI responses, they traced the problem back to themselves rather than the AI: the information they were feeding it about themselves was insufficient. They decided to build a tool to organize and structure their own self-knowledge.
+
+**insight:** Attributes the problem to themselves rather than external systems, and chooses software development as the solution. A characteristic move.
+
+---
+
+### Independence as an act of freedom and autonomy
 
 **period:** 2016-09
 
-**quote:** "雇われるのをやめて自分で会社を作ったことかな？"
+**quote:** "Probably the moment I quit being employed and started my own company?"
 
-**scene:** インタビュアーが絶対に譲れない価値観を尋ねると、ユーザーは「自由、自律」と即答した。その価値観を最も強く感じた出来事として、雇われるのをやめて自分で会社を作った決断を挙げた。2016年9月という具体的な時期も明確に語っている。
+**scene:** When the interviewer asked about their most non-negotiable value, they answered immediately: "freedom and autonomy." The concrete event they named as best embodying that value was the decision to stop being an employee and start their own company. They named the specific date — September 2016 — without hesitation.
 
-**insight:** 自由と自律という価値観を、実際の行動（独立・起業）で体現している。
+**insight:** Freedom and autonomy aren't just words to them. They have a concrete, datable action that proves it.
 
 ---
 
-### 初めての自力マネタイズ、3人の顧客
+### First self-earned money — 3 customers
 
 **period:** 2018
 
-**quote:** "独立したから初めて自分の力でお金を稼いだときかな？"
+**quote:** "Probably the first time I earned money entirely on my own, after going independent?"
 
-**scene:** プログラミング教育のための集客LPを作り、コンバージョンから決済までの流れを自分で構築した。実際に3人のお客さんが来て、初めて自分の力で報酬を得た。
+**scene:** Built a lead-gen landing page for a programming education product and set up the entire flow from conversion to payment. Three paying customers came through. First time earning money purely through their own effort.
 
-**insight:** 自分で仕組みをゼロから作り、それが実際に機能して成果が出ることに強い達成感を覚えるタイプである。
-
----
-
-### 縛られる状態を経験し、そこから脱した
-
-**period:** unknown
-
-**quote:** "あとは結婚生活もだった！ もちろんどちらも経験していて 離婚したし、社員を維持できなくなって今は1人で返済をしています。"
-
-**scene:** ユーザーは「お金や人間関係に縛られる重い状態」を絶対に避けたいと語った後、自ら結婚生活と経営（借金・人を雇う）の両方を経験し、離婚と社員維持断念という形でそこから脱したことを明かした。現在は一人で返済を続けている。
-
-**insight:** ユーザーは自らが「縛られる」と定義する状態に実際に入り、そこから抜け出す選択をしている。
+**insight:** Finds deep satisfaction in building systems from scratch and watching them actually produce output. This is a core source of achievement for them.
 
 ---
 
-### テレビで見た「起業するする詐欺」の人
+### Entering and escaping the "constrained" state
 
-**period:** unknown
+**period:** Unknown
 
-**quote:** "ずっと会社員や公務員をやっていて、起業するする詐欺の人を見た時"
+**quote:** "Marriage too! Of course I've experienced both — I got divorced, and I couldn't keep the employees going, so now I'm paying off the debt alone."
 
-**scene:** テレビで、ずっと会社員や公務員を続けながら起業を先延ばしにしている人の姿を見た。その人のことを「起業するする詐欺」と表現し、好きなことにチャレンジすればよかったと後悔する姿を「なれの果て」として認識している。
+**scene:** After saying they absolutely wanted to avoid "the heavy state of being tied down by money and relationships," they revealed they had actually lived through both — marriage and running a company with employees. They got divorced. They couldn't sustain the payroll and now carry the debt alone.
 
-**insight:** この人は、行動しないまま時間が過ぎることを「詐欺」と捉えるほど、挑戦と行動の一致を重視している。
+**insight:** Didn't just avoid the "constrained" state in theory — they entered it, and then actively chose to leave it.
 
 ---
 
-### 大企業で諦めている同僚たち
+### The "perpetual pre-entrepreneur" seen on TV
 
-**period:** unknown
+**period:** Unknown
 
-**quote:** "実際に体感したのは大企業にいる人で諦めている人が多かったから"
+**quote:** "I saw someone on TV who'd been a salaryman or civil servant their whole life — the type who keeps saying they'll start a business but never does."
 
-**scene:** 同じ会社で働いていた大企業の人々が、何かを諦めたような姿勢で働いているのを目の当たりにした。その姿が、テレビで見た「なれの果て」と重なった。
+**scene:** Saw someone on TV who had spent their career as an employee and kept putting off starting a business. Called this "perpetual pre-entrepreneur syndrome." Views the image of someone full of regret for never having tried what they loved as a cautionary tale — "what I will not become."
 
-**insight:** 周囲の「諦めた姿」を敏感に察知し、それを自分が避けるべき未来の指標として捉える傾向がある。
+**insight:** Treats the failure to act on what you love as a kind of betrayal against your own life. Holds the alignment of intention and action as a non-negotiable standard.
+
+---
+
+### The colleagues at big companies who had already given up
+
+**period:** Unknown
+
+**quote:** "What really hit me was seeing how many people inside big companies had already given up."
+
+**scene:** Worked alongside people from large corporations and directly witnessed their resigned, checked-out attitude. That image overlapped with the "perpetual pre-entrepreneur" cautionary tale they'd seen on TV.
+
+**insight:** Highly attuned to signs of resignation in others, and treats that image as a concrete indicator of a future to avoid.
 
 ---

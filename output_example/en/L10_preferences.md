@@ -1,12 +1,31 @@
-# L10: Preferences & Style（好み・スタイル）
+# L10: Preferences & Style
 
-> Zone: **STATE**
+> Zone: **STATE** — Current context
 
-## 収集された情報
+---
 
-- 肩書きがない状態を心地よいと感じる
-- バックパック1個で旅するような軽やかな生き方を好む
-- 自由な働き方には「何から手をつけるか迷う」という両面があると認識している
-- 迷ったときは「とりあえずやってみる」というスタンスを取る
-- 先に作ってみて見せて修正する開発スタイルを好む
-- 朝方である程度人と話したほうが集中力が上がる
+## Preferred style for AI conversation
+
+- No flattery needed. Give objective opinions clearly and directly
+- Avoids pompous tones; prefers a sincere, declarative voice
+- Avoid IT industry metaphors and engineering jargon — explain things in plain language
+- Prefers conclusions first, then context — concise and direct
+
+## Work style
+
+- Morning person. Productivity goes up after some human interaction
+- Prefers prototype-first development: build something, show it, iterate
+- Default stance when unsure: "just try it and see"
+- Finds a state without titles or labels surprisingly comfortable
+
+## Things they enjoy
+
+- Music: singing (the voice itself, not playing guitar), voice training
+- Other: mystery novels, podcast recording, psychology / the subconscious / coaching
+- Environment: traveling light, warm climates, moving through the world with just a backpack
+
+## Things they dislike or find difficult
+
+- Aware of the double-edged nature of free work: "not knowing where to start" is the flip side of full autonomy
+- Work where precision is the only thing that matters (accounting, tax-filing type tasks)
+- Jobs that only involve executing predefined tasks, or environments where even the method is prescribed

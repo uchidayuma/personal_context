@@ -1,13 +1,26 @@
-# L7: Fears & Avoidances（恐れ・回避）
+# L7: Fears & Avoidances
 
-> Zone: **SHAPE**
+> Zone: **SHAPE** — Shaped by experience
 
-## 収集された情報
+---
 
-- 偽装請負の働き方に戻ることを恐れている
-- お金が切迫すると体の感覚が遠くなり、判断を誤ることを恐れている
-- お金や人間関係に縛られる重い状態を絶対になりたくない立場としている
-- 生涯同じ生活を続けることを縛られる状態として回避したいと考えている
-- 借金を背負って人を雇って企業を経営することを縛られる状態として回避したいと考えている
-- 結婚生活を縛られる状態の具体例として挙げている
-- 好きなことにチャレンジせず後悔する姿になることを避けたいと思っている
+## What they fear
+
+- When money gets tight, bodily sensations fade and judgment goes wrong — this is a real, lived fear
+- Fears returning to the disguised-subcontracting style of work
+
+## What they avoid / have always avoided
+
+- Being weighed down by financial or interpersonal obligations is an absolutely unacceptable state
+- Avoids taking on debt, hiring employees, and running a company as a form of being "tied down"
+- Avoids long-term contracts and work arrangements that place them under someone's control
+- Views marriage as a concrete example of a constraining state
+
+## Images of who they don't want to become
+
+- Someone who never tried what they loved and ends up full of regret
+- Someone who spends their entire life locked in the same constrained routine
+
+## Root of the fears
+
+- A lived experience: when finances take over decision-making, bodily sensations fade and the person loses their authentic self
