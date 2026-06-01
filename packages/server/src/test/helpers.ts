@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import type { Env } from 'hono'
 import { vi } from 'vitest'
 import type { AppVariables } from '../types.js'
 import type { Db } from '../types.js'
@@ -55,8 +56,8 @@ export function createTestApp(
   return app
 }
 
-export async function req(
-  app: Hono<any>,
+export async function req<E extends Env>(
+  app: Hono<E>,
   method: string,
   path: string,
   body?: object,
