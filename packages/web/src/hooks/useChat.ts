@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const SESSION_KEY = 'chat_session'
 
@@ -6,6 +7,7 @@ export type Message = { role: 'assistant' | 'user'; content: string }
 export type SessionSummary = { facts: Record<string, number>; timeline: number; vignettes: string[] }
 
 export function useChat(refreshProgress: () => Promise<void>) {
+  const { i18n } = useTranslation()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -48,7 +50,11 @@ export function useChat(refreshProgress: () => Promise<void>) {
   async function startSession() {
     setLoading(true)
     try {
-      const res = await fetch('/api/sessions', { method: 'POST' })
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: i18n.language }),
+      })
       if (res.status === 429) { setRateLimitHit(true); return }
       const data = await res.json() as { sessionId: string; message: string }
       setSessionId(data.sessionId)
