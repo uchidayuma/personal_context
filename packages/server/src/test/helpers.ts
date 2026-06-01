@@ -56,7 +56,7 @@ export function createTestApp(
 }
 
 export async function req(
-  app: Hono,
+  app: Hono<any>,
   method: string,
   path: string,
   body?: object,

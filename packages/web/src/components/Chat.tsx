@@ -29,7 +29,31 @@ export default function Chat() {
     } catch { /* ignore */ }
   }
 
-  useEffect(() => { startSession(); refreshProgress() }, [])
+  const SESSION_KEY = 'chat_session'
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SESSION_KEY)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as { sessionId: string; messages: Message[]; ended: boolean }
+        setSessionId(parsed.sessionId)
+        setMessages(parsed.messages)
+        setEnded(parsed.ended)
+      } catch {
+        startSession()
+      }
+    } else {
+      startSession()
+    }
+    refreshProgress()
+  }, [])
+
+  useEffect(() => {
+    if (sessionId) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId, messages, ended }))
+    }
+  }, [sessionId, messages, ended])
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   async function startSession() {
@@ -168,7 +192,7 @@ export default function Chat() {
             {t('chat.sessionEnded')}
             <button
               className={styles.newSessionBtn}
-              onClick={() => { setEnded(false); setMessages([]); setSessionId(null); setRemainingTurns(null); startSession() }}
+              onClick={() => { sessionStorage.removeItem(SESSION_KEY); setEnded(false); setMessages([]); setSessionId(null); setRemainingTurns(null); startSession() }}
             >
               {t('chat.newSession')}
             </button>
