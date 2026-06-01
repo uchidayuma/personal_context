@@ -17,7 +17,8 @@
 
 | ファイル                                          | 役割                                                     |
 | ------------------------------------------------- | -------------------------------------------------------- |
-| `docs/vision/PHILOSOPHY.md`                       | このプロジェクトの設計哲学・こだわり                     |
+| `docs/vision/PHILOSOPHY.ja.md` | このプロジェクトの設計哲学・こだわり、設計哲学の日本語原文（英語版の源泉）|
+| `docs/vision/PHILOSOPHY.md`    | 英語翻訳版（PHILOSOPHY.ja.mdを更新したら合わせて更新）|
 | `docs/vision/PRD.md`                              | プロダクトのビジョン・要件定義                           |
 | `docs/vision/CONTEXT_LAYERS.md`                   | L1〜L10 同心円モデルの定義（設計の根幹）                 |
 | `docs/spec/SPEC.md`                               | 技術仕様（テーブル設計・アルゴリズム・APIなど）          |

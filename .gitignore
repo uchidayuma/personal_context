@@ -8,4 +8,5 @@ data/*.db-wal
 models/
 *.tsbuildinfo
 .claude/settings.local.json
+*.draft.*.md
 .claude/agent-memory/

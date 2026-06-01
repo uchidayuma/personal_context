@@ -1,23 +1,74 @@
-# 自分コンテキスト：設計哲学 (PHILOSOPHY.md)
+# Personal Context Engine: Design Philosophy
 
-## **どう感じたか** が **どう考えたか** より真実に近い
+<!-- English translation of PHILOSOPHY.ja.md — update both files together -->
 
-このシステムが行動ベースの質問にこだわる理由は、ここにある。
+## **How you felt** is closer to the truth than **how you thought**
 
-**どう考えたか** は、すでに加工された自分だ。社会の常識、周囲の期待、**こうあるべき** という他人軸のフィルターを通った後の答えにすぎない。頭で考えた言葉は、本音ではなく**編集済みの自分**を語る。
+I built this system because I spent a long time ignoring my body's signals.
 
-**どう感じたか** は違う。体の反応は嘘をつかない。
+That is why this system insists on behavior-based questions.
 
-ある状況で体が軽くなったか、重くなったか。時間を忘れたか、翌朝ベッドから出られなかったか。怒りが湧いたか、静かに嬉しかったか。そういった**体ベースの事実**は、頭が理屈をこねる前に本音を知っている。
+**How you thought** is already a processed version of yourself. It is the answer filtered through social norms, others' expectations, and the "should" imposed from outside. Words that come from the head speak not from your true self, but from your **edited self**.
+
+**How you felt** is different. The body does not lie.
+
+Did your body feel light in that moment, or heavy? Did you lose track of time, or could you not get out of bed the next morning? Did anger rise, or did a quiet joy come over you? These **body-based facts** know the truth before the mind starts rationalizing.
 
 ---
 
-## システム設計への接続
+## Connecting to System Design
 
-だから、このシステムは「あなたの価値観は何ですか」とは聞かない。
+That is why this system never asks "What are your values?"
 
-代わりに、体が動いた瞬間・止まった瞬間を問う。お金と時間が実際にどこへ流れたかを問う。他人の行動に違和感を覚えた具体的な場面を問う。
+Instead, it asks about the moments your body moved — or stopped. Where your money and time actually went. The specific scenes where someone else's behavior felt wrong.
 
-インタビューが引き出すのは**言語化された自己像**ではなく、**行動と感情の痕跡**だ。
+First: train yourself to notice your body's signals in daily life.
 
-VignetteがLLMへの最重要インプットになるのも、同じ理由だ。「〇〇を大切にしています」という宣言より、「あのとき体が軽かった」という一文の方が、その人を深く伝える。感情は思考より先に真実を知っている。
+For me, it is the expansion in my chest, the lightness in my shoulders and legs, the state of my stomach. But this is personal — your barometer will differ.
+
+What the interview draws out is not a **verbalized self-image**, but **traces of behavior and emotion**.
+
+This is the same reason vignettes become the most critical input for an LLM.
+
+A single sentence — "that moment when my body felt light" — tells an LLM more about a person than ten bullet points of values.
+
+Emotion knows the truth before thought does.
+
+---
+
+## What a Vignette Is, and Why It Matters Most
+
+When you give an LLM the words "value: freedom," the LLM imagines **freedom in general**.
+
+Not your freedom — but the statistical average of "freedom" across everything humanity has ever written. That average is far from you.
+
+A vignette is different. It is a **specific scene**.
+
+*"Turned down a promotion. When asked why, said 'the Monday all-hands just felt wrong.'"*
+
+From that one sentence, an LLM grasps the shape of your "freedom": what situations trigger that feeling, how you express it in words, the fact that you decide with your body rather than your head.
+
+A label is **compressed information**. Compression strips out personal context. A vignette is pre-compression — place, time, conversation, body sensation still intact.
+
+In fiction terms: "She was sad" versus "She put down the phone and stared at the wall for three minutes." The first is explanation; the second is scene. An LLM reads people through scenes.
+
+**What makes a vignette:**
+
+- A specific situation (when, where, what happened)
+- A physical reaction or behavioral fact — not an emotional label
+- Distinctiveness: something unmistakably *this person*
+
+"I felt happy when I helped a friend" is not a vignette.
+"I stopped everything I was doing to spend two hours with a junior colleague who reached out the day before a deadline. The next day's work all slipped. I had no regrets." — that is a vignette.
+
+---
+
+## Why the System Prioritizes Vignettes
+
+The instruction to the extraction AI is not "summarize the facts" — it is "**preserve the scenes**."
+
+Summarization kills context. Scenes keep it alive.
+
+The system's output file (`life_chapters.md`) is a collection of vignettes. An LLM reading it does not learn facts about you — it **raises its resolution of you as a person**.
+
+An LLM with higher resolution can judge: "This person would probably feel this way," "This option doesn't fit who they are." That is what "sharper AI responses" actually means.

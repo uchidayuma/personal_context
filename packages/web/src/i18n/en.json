@@ -13,6 +13,11 @@
       "noticeSuffix": "."
     }
   },
+  "demo": {
+    "rateLimitTitle": "Daily session limit reached",
+    "rateLimitBody": "The demo allows 1 session per IP per day. Please come back tomorrow.",
+    "rateLimitSelfHost": "To use without limits, "
+  },
   "chat": {
     "placeholder": "Type a message (Ctrl+Enter to send)",
     "placeholderEnded": "Session ended",

@@ -67,6 +67,30 @@
   padding: 24px;
 }
 
+@media (max-width: 600px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+  }
+  .title {
+    font-size: 15px;
+  }
+  .nav {
+    margin-left: 0;
+    width: 100%;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .navBtn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  .main {
+    padding: 12px;
+  }
+}
+
 /* Export view */
 .exportGrid {
   max-width: 720px;

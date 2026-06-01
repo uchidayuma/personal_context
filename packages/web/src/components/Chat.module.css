@@ -6,6 +6,12 @@
   height: calc(100vh - 100px);
 }
 
+@media (max-width: 600px) {
+  .container {
+    height: calc(100vh - 130px);
+  }
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -177,4 +183,32 @@
 }
 .skipBtn:hover {
   color: #1a1a2e;
+}
+
+.rateLimitBanner {
+  margin: auto;
+  max-width: 480px;
+  padding: 40px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rateLimitTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.rateLimitBody {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.rateLimitBody a {
+  color: #e94560;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

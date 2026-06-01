@@ -6,7 +6,6 @@ export const userRoute = new Hono<{ Variables: AppVariables }>()
 
 userRoute.get('/', async (c) => {
   const user = await getUser(c.get('db'), c.get('userId'))
-  console.log('[DEBUG /api/user]', JSON.stringify(user))
   return c.json(user)
 })
 

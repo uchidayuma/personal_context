@@ -47,7 +47,6 @@ export default function App() {
     fetch('/api/user')
       .then(r => r.json())
       .then((data: { language: string; onboardingCompletedAt: string | null }) => {
-        console.log('[DEBUG /api/user response]', data)
         if (data.language && data.language !== i18n.language) {
           i18n.changeLanguage(data.language)
         }

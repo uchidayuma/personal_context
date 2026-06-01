@@ -37,9 +37,9 @@ When an incompatible model is used, the server returns HTTP 422 with `code: "MOD
 
 ```
 packages/
-  core/     # DB, LLM integration, interview engine, export
-  server/   # Hono API server
+  server/   # Hono API server — DB, LLM integration, interview engine, export
   web/      # React frontend
+  mcp/      # MCP server — Claude Code / Codex integration
 docs/       # Design documents
 ```
 

@@ -1,18 +1,24 @@
 # Personal Context Engine
 
-**Give AI a complete picture of who you are — once, and for any LLM.**
+**Record yourself in a form any AI can truly understand — your personal context engine, portable to any LLM.**
+
+Personal Context solves two problems:
+
+1. Understand yourself
+2. Build a **personal file** — not locked to any AI service
 
 Answer a few interview questions each day. The engine quietly builds a structured knowledge base of you — exportable as plain Markdown to Claude, ChatGPT, Cursor, or any LLM you choose.
 
 > For people who want sharper AI responses, or who want to capture themselves as a complete Markdown document.
 
+[![CI](https://github.com/uchidayuma/personal_context/actions/workflows/ci.yml/badge.svg)](https://github.com/uchidayuma/personal_context/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-*日本語ドキュメント: [docs/](docs/)*
+*日本語 README: [README.ja.md](README.ja.md)*
 
 ---
 
@@ -54,24 +60,20 @@ cd personal_context
 cp .env.example .env
 ```
 
-Choose your LLM provider in `.env`:
+Edit `.env` and pick one LLM provider:
 
 ```bash
-# Option A: Ollama — fully local, no API key needed
+# Pick one provider and uncomment the matching API key:
+
 LLM_PROVIDER=ollama
-# OLLAMA_BASE_URL=http://localhost:11434/v1  # default
+# LLM_PROVIDER=openai
+# LLM_PROVIDER=anthropic
+# LLM_PROVIDER=deepseek
 
-# Option B: OpenAI
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-
-# Option C: Anthropic
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Option D: DeepSeek
-LLM_PROVIDER=deepseek
-DEEPSEEK_API_KEY=sk-...
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+# DEEPSEEK_API_KEY=sk-...
+# OLLAMA_BASE_URL=http://localhost:11434/v1  # optional, this is the default
 ```
 
 ```bash
@@ -146,6 +148,7 @@ Rational explanations are already filtered through social expectations and self-
 packages/
   server/   # Hono API server — DB, LLM, interview engine, export
   web/      # React + Vite frontend
+  mcp/      # MCP server — Claude Code / Codex integration
 docs/
   vision/          # PHILOSOPHY.md, PRD.md, CONTEXT_LAYERS.md
   spec/            # SPEC.md, openapi.yml, TESTING_DESIGN.md

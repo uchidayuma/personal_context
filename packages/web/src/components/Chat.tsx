@@ -16,6 +16,7 @@ export default function Chat() {
   const [ended, setEnded] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
+  const [rateLimitHit, setRateLimitHit] = useState(false)
   const [progress, setProgress] = useState<ProgressData | null>(null)
   const [remainingTurns, setRemainingTurns] = useState<number | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -35,6 +36,10 @@ export default function Chat() {
     setLoading(true)
     try {
       const res = await fetch('/api/sessions', { method: 'POST' })
+      if (res.status === 429) {
+        setRateLimitHit(true)
+        return
+      }
       const data = await res.json() as { sessionId: string; message: string }
       setSessionId(data.sessionId)
       setMessages([{ role: 'assistant', content: data.message }])
@@ -103,6 +108,23 @@ export default function Chat() {
   }
 
   const lastCoachMessage = [...messages].reverse().find(m => m.role === 'assistant')?.content ?? ''
+
+  if (rateLimitHit) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.rateLimitBanner}>
+          <p className={styles.rateLimitTitle}>{t('demo.rateLimitTitle')}</p>
+          <p className={styles.rateLimitBody}>{t('demo.rateLimitBody')}</p>
+          <p className={styles.rateLimitBody}>
+            {t('demo.rateLimitSelfHost')}
+            <a href="https://github.com/uchidayuma/personal_context" target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.container}>
