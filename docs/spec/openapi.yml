@@ -598,7 +598,7 @@ components:
                 example: L01_values.md
               title:
                 type: string
-                example: L1: Values & Beliefs（価値観・信念）
+                example: "L1: Values & Beliefs（価値観・信念）"
               zone:
                 type: string
                 enum: [CORE, SHAPE, STATE]

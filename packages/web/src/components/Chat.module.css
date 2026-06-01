@@ -158,6 +158,10 @@
 .voiceModeBtn:hover {
   background: rgba(26, 26, 46, 0.16);
 }
+.voiceModeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .micBtn {
   width: 44px;
   border-radius: 12px;

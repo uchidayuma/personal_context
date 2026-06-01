@@ -140,13 +140,11 @@ export default function Chat() {
             </button>
           )}
           {sessionId && !ended && (
-            <button
-              onClick={() => setVoiceMode(true)}
-              data-tooltip={t('chat.voiceMode')}
-              className={styles.voiceModeBtn}
-            >
-              🎧
-            </button>
+            <span data-tooltip={`${t('chat.voiceMode')} (Coming Soon)`} style={{ position: 'relative', display: 'inline-flex' }}>
+              <button disabled className={styles.voiceModeBtn}>
+                🎧
+              </button>
+            </span>
           )}
           {voice.isSupported && (
             <button

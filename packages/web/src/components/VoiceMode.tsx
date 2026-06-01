@@ -28,10 +28,10 @@ export default function VoiceMode({
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('')
   const langCode = language === 'ja' ? 'ja-JP' : 'en-US'
 
-  // Ref so async callbacks always see the latest version
   const beginListeningRef = useRef(() => {})
-  // Set to true immediately when session ends to stop any in-flight VAD transcription
   const sessionEndedRef = useRef(false)
+  // Guard: speak initial message only once, after voices are ready
+  const hasSpokenInitial = useRef(false)
 
   useEffect(() => {
     function loadVoices() {
@@ -101,13 +101,18 @@ export default function VoiceMode({
     }
   }
 
-  // Kick off: speak initial message → then auto-listen
+  // Speak initial message once voices are ready (voices=[] at mount → TTS fails silently)
   useEffect(() => {
+    if (voices.length === 0 || hasSpokenInitial.current) return
+    hasSpokenInitial.current = true
     if (initialCoachMessage) {
       speak(initialCoachMessage, () => beginListeningRef.current())
     } else {
       beginListeningRef.current()
     }
+  }, [voices])
+
+  useEffect(() => {
     return () => {
       window.speechSynthesis.cancel()
       voice.stopListening()
@@ -116,6 +121,7 @@ export default function VoiceMode({
 
   const displayPhase: Phase =
     voice.isTranscribing || phase === 'processing' ? 'processing'
+    : voice.isListening ? 'listening'
     : phase
 
   const PHASE_LABEL: Record<Phase, string> = {
