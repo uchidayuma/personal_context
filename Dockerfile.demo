@@ -30,6 +30,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
 COPY --from=builder /app/packages/web/dist ./public
+COPY --from=builder /app/packages/server/drizzle ./packages/server/drizzle
 
 RUN mkdir -p /app/data
 VOLUME ["/app/data"]

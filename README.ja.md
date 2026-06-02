@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/f1423bed-72e4-48d6-916a-8123d4bdfe38
 
 ## ライブデモ
 
-**インストール不要で試せます：** [personal-context.onrender.com](https://personal-context.onrender.com/)
+**インストール不要で試せます：** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
 
 > **注意：** デモはRenderの無料プランで動いています。しばらくアクセスがなかった場合、初回表示まで **約30秒** かかることがあります。これは正常な動作です。
 >

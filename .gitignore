@@ -10,3 +10,4 @@ models/
 .claude/settings.local.json
 *.draft.*.md
 .claude/agent-memory/
+docs/launch

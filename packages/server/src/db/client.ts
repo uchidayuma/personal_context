@@ -5,6 +5,7 @@ import * as schema from './schema.js'
 import type { Db } from '../types.js'
 import path from 'path'
 import fs from 'fs'
+import { fileURLToPath } from 'url'
 import { migrate } from 'drizzle-orm/libsql/migrator'
 
 const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), 'data', 'personal_context.db')
@@ -18,7 +19,11 @@ const simulateClient = createClient({ url: `file:${SIMULATE_DB_PATH}` })
 export const db = drizzle(client, { schema })
 export const simulateDb = drizzle(simulateClient, { schema })
 
-const DRIZZLE_FOLDER = new URL('../../drizzle', import.meta.url).pathname
+// dev (tsx): import.meta.url = src/db/client.ts → ../../drizzle = packages/server/drizzle ✓
+// prod (tsup bundle): import.meta.url = dist/index.js → ../drizzle = packages/server/drizzle ✓
+const DRIZZLE_FOLDER = process.env.NODE_ENV === 'production'
+  ? fileURLToPath(new URL('../drizzle', import.meta.url))
+  : fileURLToPath(new URL('../../drizzle', import.meta.url))
 
 export async function initDatabase() {
   await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
