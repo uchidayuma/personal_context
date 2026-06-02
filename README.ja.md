@@ -2,7 +2,7 @@
 
 **あなたという人間を、AIが本当に理解できる形で記録する。どのLLMにも使える、あなた専用のコンテキストエンジン**
 
-![alt](https://github.com/user-attachments/assets/3dda5660-8ac2-44ef-9a59-acd3a1c0f7e4)
+![alt](https://github.com/user-attachments/assets/cd8947da-df70-421d-b939-d46043d37034)
 
 自分コンテキストでは、2つの課題を解決します。
 
@@ -41,7 +41,7 @@ https://github.com/user-attachments/assets/f1423bed-72e4-48d6-916a-8123d4bdfe38
 ---
 
 ## 自分コンテキストの3コアモデル
-![image](https://github.com/user-attachments/assets/dcbec033-1b1d-4910-93d2-addddd3fe231)
+![image](https://github.com/user-attachments/assets/5e441797-33fa-4bc0-b97c-0bac972ae84a)
 
 | レイヤー | 深さ | 表現するもの | 出力ファイル |
 | :--- | :--- | :--- | :--- |
