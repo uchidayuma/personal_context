@@ -14,7 +14,7 @@
   },
   "demo": {
     "rateLimitTitle": "本日のセッション上限に達しました",
-    "rateLimitBody": "デモ版は1IPあたり1日1セッションまでです。明日またお試しください。",
+    "rateLimitBody": "デモ版は1IPあたり1日3セッションまでです。明日またお試しください。",
     "rateLimitSelfHost": "続けて使うには自分でホストするか、"
   },
   "chat": {

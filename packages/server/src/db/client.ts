@@ -90,7 +90,7 @@ export async function checkDemoRateLimit(targetDb: Db, ip: string): Promise<bool
     .select({ sessionCount: schema.demoRateLimit.sessionCount })
     .from(schema.demoRateLimit)
     .where(and(eq(schema.demoRateLimit.ip, ip), eq(schema.demoRateLimit.date, today)))
-  if (existing.length > 0 && existing[0].sessionCount >= 1) return false
+  if (existing.length > 0 && existing[0].sessionCount >= 3) return false
   await targetDb
     .insert(schema.demoRateLimit)
     .values({ ip, date: today, sessionCount: 1 })

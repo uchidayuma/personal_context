@@ -15,6 +15,14 @@ Personal Context solves two problems:
 
 Answer a few interview questions each day. The engine quietly builds a structured knowledge base of you — exportable as plain Markdown to Claude, ChatGPT, Cursor, or any LLM you choose.
 
+## ⚡️ Live Demo
+
+**Try it without installing anything:** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
+
+> **Note:** Demo sessions are ephemeral — data is not persisted after you close the tab. Limited to 3 sessions per IP per day.
+
+---
+
 https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
 
 > For people who want sharper AI responses, or who want to capture themselves as a complete Markdown document.
@@ -36,16 +44,6 @@ https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
 | CORE | Deepest | Immutable values, core beliefs, and innate temperament. The foundation of "you". | `L01`, `L02` |
 | SHAPE | Medium | Acquired experiences, behavioral patterns, relationships, and distinct stances. | `L03` - `L08` |
 | STATE | Surface | Current goals, active projects, and immediate preferences for the session. | `L09`, `L10` |
-
-## Live Demo
-
-**Try it without installing anything:** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
-
-> **Note:** The demo runs on Render's free tier. If the service has been idle, it will take **~30 seconds to wake up** on first visit — this is normal. Just wait for the app to load.
->
-> Demo sessions are ephemeral — data is not persisted after you close the tab. Limited to 1 session per IP per day.
-
----
 
 ## The Problem
 
