@@ -8,8 +8,10 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { migrate } from 'drizzle-orm/libsql/migrator'
 
-const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), 'data', 'personal_context.db')
-const SIMULATE_DB_PATH = process.env.SIMULATE_DB_PATH ?? path.join(process.cwd(), 'data', 'simulate.db')
+// src/db/client.ts (dev) or dist/db/client.js (prod): 4 levels up = project root
+const DEFAULT_DATA_DIR = fileURLToPath(new URL('../../../../data', import.meta.url))
+const DB_PATH = process.env.DB_PATH ?? path.join(DEFAULT_DATA_DIR, 'personal_context.db')
+const SIMULATE_DB_PATH = process.env.SIMULATE_DB_PATH ?? path.join(DEFAULT_DATA_DIR, 'simulate.db')
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
 

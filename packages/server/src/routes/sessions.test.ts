@@ -7,6 +7,7 @@ vi.mock('../interview/engine.js', () => ({
   startOnboarding: vi.fn().mockResolvedValue({ sessionId: 'sess-2', message: 'はじめまして' }),
   endSession: vi.fn().mockResolvedValue(undefined),
   skipQuestion: vi.fn().mockResolvedValue({ message: '次の質問です', remainingTurns: 1 }),
+  buildSessionSummary: vi.fn().mockResolvedValue({ facts: {}, timeline: 0, vignettes: [] }),
 }))
 
 vi.mock('../db/client.js', () => ({
