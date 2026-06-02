@@ -1,6 +1,7 @@
 # Personal Context Engine
 
-![alt](https://github.com/user-attachments/assets/3dda5660-8ac2-44ef-9a59-acd3a1c0f7e4)
+![alt](https://github.com/user-attachments/assets/cd8947da-df70-421d-b939-d46043d37034)
+
 
 *日本語 README: [README.ja.md](README.ja.md)*
 
@@ -37,7 +38,7 @@ https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
 ---
 
 ## 3 core model
-![image](https://github.com/user-attachments/assets/dcbec033-1b1d-4910-93d2-addddd3fe231)
+![image](https://github.com/user-attachments/assets/5e441797-33fa-4bc0-b97c-0bac972ae84a)
 
 | Layer | Depth | What it captures | Output Files |
 | :--- | :--- | :--- | :--- |
