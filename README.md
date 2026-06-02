@@ -39,7 +39,7 @@ https://github.com/user-attachments/assets/9ab712f0-1af2-4b5f-9ca0-df786cd25fdb
 
 ## Live Demo
 
-**Try it without installing anything:** [personal-context.onrender.com](https://personal-context.onrender.com/)
+**Try it without installing anything:** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
 
 > **Note:** The demo runs on Render's free tier. If the service has been idle, it will take **~30 seconds to wake up** on first visit — this is normal. Just wait for the app to load.
 >

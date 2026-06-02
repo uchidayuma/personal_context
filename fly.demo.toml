@@ -1,0 +1,31 @@
+# fly.toml app configuration file generated for personal-context on 2026-06-02T08:42:44+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'personal-context-demo'
+primary_region = 'sjc'
+
+[build]
+  dockerfile = "Dockerfile.demo"
+
+[env]
+  NODE_ENV = "production"
+  DEMO_MODE = "true"
+
+[mounts]
+  source = "context_data"
+  destination = "/app/data" # SQLiteファイルが保存されるパス
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

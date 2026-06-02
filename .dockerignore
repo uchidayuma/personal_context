@@ -1,0 +1,15 @@
+# flyctl launch added from .gitignore
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/data/*.db
+**/data/*.db-shm
+**/data/*.db-wal
+**/models
+**/*.tsbuildinfo
+**/.claude/settings.local.json
+**/*.draft.*.md
+**/.claude/agent-memory
+**/docs/launch
+fly.toml
