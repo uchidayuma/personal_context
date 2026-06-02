@@ -1,122 +1,37 @@
 import { Hono } from 'hono'
-import { count, and, eq, inArray } from 'drizzle-orm'
+import { count, and, eq } from 'drizzle-orm'
 import type { Db } from '../types.js'
 import * as schema from '../db/schema.js'
+import type { StructuredFactCategory } from '../db/schema.js'
 import type { AppVariables } from '../types.js'
+import { LAYER_META, type LayerMeta } from '../export/layers.js'
 
 const { structuredFacts, lifeTimeline, professionalRecords, sessionVignettes } = schema
 
 export const progressRoute = new Hono<{ Variables: AppVariables }>()
 
-function buildLayerDefinitions(db: Db, userId: string) { return [
-  {
-    id: 'L1',
-    name: '価値観・信念',
-    zone: 'CORE' as const,
-    threshold: 5,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['values']),
-      )),
-  },
-  {
-    id: 'L2',
-    name: '気質・性格',
-    zone: 'CORE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['character']),
-      )),
-  },
-  {
-    id: 'L3',
-    name: '人生年表',
-    zone: 'SHAPE' as const,
-    threshold: 8,
-    query: () => db.select({ count: count() }).from(lifeTimeline)
-      .where(and(
-        eq(lifeTimeline.userId, userId),
-        eq(lifeTimeline.source, 'interview'),
-      )),
-  },
-  {
-    id: 'L4',
-    name: '職務詳細',
-    zone: 'SHAPE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(professionalRecords)
-      .where(eq(professionalRecords.userId, userId)),
-  },
-  {
-    id: 'L5',
-    name: '関係性',
-    zone: 'SHAPE' as const,
-    threshold: 5,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['relationships']),
-      )),
-  },
-  {
-    id: 'L6',
-    name: '意見・スタンス',
-    zone: 'SHAPE' as const,
-    threshold: 5,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['opinions']),
-      )),
-  },
-  {
-    id: 'L7',
-    name: '恐れ・回避',
-    zone: 'SHAPE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['fears']),
-      )),
-  },
-  {
-    id: 'L8',
-    name: '繰り返す癖',
-    zone: 'SHAPE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['patterns']),
-      )),
-  },
-  {
-    id: 'L9',
-    name: '目標・方向感',
-    zone: 'STATE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['goals']),
-      )),
-  },
-  {
-    id: 'L10',
-    name: '好み・スタイル',
-    zone: 'STATE' as const,
-    threshold: 3,
-    query: () => db.select({ count: count() }).from(structuredFacts)
-      .where(and(
-        eq(structuredFacts.userId, userId),
-        inArray(structuredFacts.category, ['preferences']),
-      )),
-  },
-] }
+function buildLayerQuery(db: Db, userId: string, layer: LayerMeta) {
+  if (layer.table === 'lifeTimeline') {
+    return db.select({ count: count() }).from(lifeTimeline)
+      .where(and(eq(lifeTimeline.userId, userId), eq(lifeTimeline.source, 'interview')))
+  }
+  if (layer.table === 'professionalRecords') {
+    return db.select({ count: count() }).from(professionalRecords)
+      .where(eq(professionalRecords.userId, userId))
+  }
+  return db.select({ count: count() }).from(structuredFacts)
+    .where(and(eq(structuredFacts.userId, userId), eq(structuredFacts.category, layer.category as StructuredFactCategory)))
+}
+
+function buildLayerDefinitions(db: Db, userId: string) {
+  return LAYER_META.map(layer => ({
+    id: layer.id,
+    name: layer.name,
+    zone: layer.zone,
+    threshold: layer.threshold,
+    query: () => buildLayerQuery(db, userId, layer),
+  }))
+}
 
 progressRoute.get('/', async (c) => {
   const db = c.get('db')

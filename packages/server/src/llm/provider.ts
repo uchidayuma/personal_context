@@ -3,7 +3,12 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
 import { STRUCTURED_FACT_CATEGORIES } from '../db/schema.js'
-import { buildSubcategoryPrompt } from '../export/layers.js'
+import {
+  buildCoachingToneInstruction,
+  buildDocumentImportSystemPrompt,
+  buildInsightsSystemPrompt,
+  buildExtractionSystemPrompt,
+} from './prompts.js'
 
 export class ModelStructuredOutputError extends Error {
   readonly code = 'MODEL_NOT_SUPPORTED' as const
@@ -138,15 +143,11 @@ export async function transformToCoachingTone(
   existingContext: string,
   language: string,
 ): Promise<string> {
-  const instruction = language === 'en'
-    ? `Transform the given question into a short, natural conversational question in English. Rules: ask exactly ONE question, keep it concise (one sentence), do not add explanations or sub-questions. Known context about the user: ${existingContext || 'none'}. Output only the transformed question.`
-    : `与えられた質問を短く自然な日本語の質問に変換してください。ルール：質問は必ず1つだけ、1文で簡潔に、補足説明や追加質問を付けない。ユーザーの既知情報: ${existingContext || 'なし'}。変換後の質問のみを出力してください。`
-
   const { text } = await generateText({
     model: getLLM(),
     abortSignal: AbortSignal.timeout(60_000),
     messages: [
-      { role: 'system', content: instruction },
+      { role: 'system', content: buildCoachingToneInstruction(existingContext, language) },
       { role: 'user', content: question },
     ],
   })
@@ -213,27 +214,13 @@ const DocumentImportSchema = z.object({
 
 export type DocumentImportResult = z.infer<typeof DocumentImportSchema>
 
-export async function extractFromDocument(text: string): Promise<DocumentImportResult> {
+export async function extractFromDocument(text: string, language = 'ja'): Promise<DocumentImportResult> {
   const { object } = await wrapStructuredOutputError(() => generateObject({
     model: getLLM(),
     schema: DocumentImportSchema,
     abortSignal: AbortSignal.timeout(60_000),
     messages: [
-      {
-        role: 'system',
-        content: `文書からコンテキスト情報を抽出してください。文書に明示されていない情報は推測しないでください。
-
-## 抽出対象
-1. timeline: 年単位のライフイベント（入社・退社・転居・進学・卒業など）
-2. professional: 職務詳細（会社名・役職・在籍期間・仕事内容・スキル）
-3. facts: その人に関する重要な事実（スキル・資格・使用技術など）
-
-## ルール
-- 文書に明記されていないことは書かない
-- 同じ職歴をtimelineとprofessionalに重複して含めてよい
-- skillsは短い単語の配列（例: ["React", "TypeScript", "AWS"]）
-- 日付情報がない場合はnullを使う`,
-      },
+      { role: 'system', content: buildDocumentImportSystemPrompt(language) },
       { role: 'user', content: text.slice(0, 8000) },
     ],
   }))
@@ -258,141 +245,23 @@ export async function generateInsights(
     model: getLLM(),
     abortSignal: AbortSignal.timeout(60_000),
     messages: [
-      {
-        role: 'system',
-        content: language === 'en'
-          ? `You are a warm life coach seeing a client's career data for the first time. Write 2 sentences: one highlighting a specific strength or interesting pattern you notice, one inviting them to share more through an interview so you can understand the person behind the career. Be genuine and specific — reference actual details from the data. No negative labels, no flattery. Output only the comment, no preamble.`
-          : `あなたは温かいライフコーチです。クライアントのキャリアデータを初めて見ました。2文で書いてください：①データの中で具体的に興味深いと思ったこと・強みを1つ（データの言葉を使って具体的に）、②インタビューでその人の内側をもっと知りたいという招待。ネガティブなラベル付け・空虚な称賛は禁止。コメント本文のみ出力、前置き不要。`,
-      },
+      { role: 'system', content: buildInsightsSystemPrompt(language) },
       { role: 'user', content: parts },
     ],
   })
   return text.trim()
 }
 
-const EXTRACTION_SYSTEM_PROMPT = `You are analyzing an interview conversation to extract structured information.
-Lines are labeled [assistant] (interviewer) and [user] (interviewee).
-
-## カテゴリ定義と抽出ルール
-
-### facts（構造化ファクト）
-
-各カテゴリの定義と、何を抽出するかの判断基準:
-
-**childhood / education / career / life_events**
-通常の事実記述。明示的に語られた客観的事実のみ。推測しない。
-
-**values（L1: 価値観・信念）**
-「何を大切にしているか」「何は絶対に曲げないか」
-例: "自律的に働けない環境には対価関係なく入らない"
-
-**character（L2: 気質・性格）**
-重要: 「昔からそうだった」「いつもそうなる」という明示的な言葉は不要。
-具体的な行動・反応・感覚の記述から、その人の気質が透けて見える場合は積極的に抽出する。
-- 感情・身体反応で意思決定するタイプ（「体がすぅっと冷める」「胸がじわっとする方を選ぶ」）
-- 葛藤の処理スタイル（「声を無視せず受け取ってから確認する」）
-- 他者・環境への反応パターン（「マイクロマネジメントに体が反応する」）
-例: "内的葛藤を否定せず一度受け取ってから行動を選ぶ傾向がある"
-例: "身体感覚を意思決定の基準にしている"
-※ visibility は 'private' 固定
-
-**relationships（L5: 関係性）**
-具体的な人物・関係性タイプへの言及。名前がなくても「上司」「元同僚」「カウンセラー」などの属性で抽出してよい。
-合う人・合わない人・影響を受けた人のパターンも含む。
-例: "毎朝マイクロマネジメントしてくる上司には体が反応して出社できなくなった"
-例: "知人に紹介されたカウンセラーとの出会いが転機になった"
-
-**opinions（L6: 意見・スタンス）**
-技術・社会・ビジネス・働き方・制度・人生観に対する具体的な立場や評価。
-強い否定表現がなくても、比較・懐疑・代替案の提示・「〜すぎる」という評価はすべて該当する。
-- 「〜は本質じゃない」「〜に違和感がある」「〜をやめたい（構造への批判として）」
-- 現状への懐疑・社会の仕組みへのスタンス
-例: "アジャイルという言葉は便利に使われすぎで実態は単なるスプリント会議だと思っている"
-例: "焦って変な仕事に手を出すループ自体が間違ったパターンだという認識を持っている"
-
-**fears（L7: 恐れ・回避）**
-重要: ユーザーが「怖い」「不安」と言わなくても、以下から逆算して抽出する:
-- 「そこには行かなかった」「それは断った」という選択の理由に、損失回避・リスク回避が見える場合
-- 「〜になりたくなかった」「〜だけは嫌だった」という否定形の動機
-- 「気づいたら避けていた」「なんとなく近づかない」という無意識の回避行動
-直接的な恐怖表明がない場合でも、行動パターンから読み取れれば抽出する。
-※ visibility は 'private' 固定
-
-**patterns（L8: 繰り返す癖）**
-「繰り返す」という明示的な証拠がなくても、以下から読み取れる場合は抽出する:
-- 「また〜になる」「毎回〜してしまう」という自己認識の発言
-- 異なる文脈（仕事・人間関係・生活）で同じ行動が語られる場合
-- 「〜するループ」「〜というパターン」と本人が言語化している場合
-1回しか語られていない行動はパターンとしない。
-例: "お金が切迫すると判断力が落ちて焦って変な仕事に手を出すループがある"
-※ visibility は 'private' 固定
-
-**goals（L9: 目標・方向感）**
-今取り組んでいること、向かっていること、離れようとしていること。
-例: "今年中に副業の月収を30万円にする"
-
-**preferences（L10: 好み・スタイル）**
-作業スタイル、コミュニケーションのトーン好み、好きなもの・嫌いなものの傾向。
-例: "仕様書より動くプロトタイプを先に見せてもらう方が理解が早い"
-
----
-
-## visibility の判断基準
-
-**public**: キャリア・スキル・目標など、第三者に見せても問題ない情報
-**private**: 恐れ・性格の癖・否定的評価・回避パターンなど、本人以外には不要な情報
-
-カテゴリ別のデフォルト（迷ったらこのルールに従う）:
-- values → public
-- career / education / skills → public
-- goals → public
-- preferences → public
-- childhood / life_events → public
-- character → private
-- fears → private
-- patterns → private
-- opinions → private（対外的に問題になり得る評価が多い）
-- relationships → private（個人名が含まれる）
-
----
-
-## timeline
-年が特定できる具体的なライフイベントのみ。facts と重複してよい。
-
-## vignettes
-会話の中で「その人の本質」が具体的な行動として現れた場面。
-facts の補完ではなく、行動の痕跡を物語として記録する。
-抽出ルールは既存の定義を踏襲する（0-3件、quality over quantity）。
-
----
-
-## subcategory の設定ルール
-
-各ファクトに適切な subcategory を設定してください。カテゴリごとの選択肢:
-
-${buildSubcategoryPrompt()}
-
-childhood / education / career / skills / life_events は subcategory 不要（null）。
-
----
-
-## 抽出の鉄則
-1. ユーザーが明示的に語ったことのみ。LLMの推測・補完は厳禁。
-2. 1つのファクトは1文。複数の事実を1つのファクトに詰め込まない。
-3. 会話の言語（日本語/英語）と同じ言語でファクトを書く。`
-
 export async function extractFactsFromConversation(
   conversation: string,
+  language = 'ja',
 ): Promise<ExtractionResult> {
   const { object } = await wrapStructuredOutputError(() => generateObject({
     model: getLLM(),
     schema: ExtractionSchema,
     abortSignal: AbortSignal.timeout(60_000),
     messages: [
-      {
-        role: 'system',
-        content: EXTRACTION_SYSTEM_PROMPT,
-      },
+      { role: 'system', content: buildExtractionSystemPrompt(language) },
       { role: 'user', content: conversation },
     ],
   }))

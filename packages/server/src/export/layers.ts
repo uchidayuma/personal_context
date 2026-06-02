@@ -1,5 +1,31 @@
 export type SectionDef = { subcategory: string; heading: string; headingEn: string }
 
+export type LayerTable = 'structuredFacts' | 'lifeTimeline' | 'professionalRecords'
+
+export type LayerMeta = {
+  id: string
+  name: string
+  zone: 'CORE' | 'SHAPE' | 'STATE'
+  category: string
+  threshold: number
+  table: LayerTable
+}
+
+// Single source of truth for L1–L10 metadata.
+// Consumed by questionSelector.ts (thresholds) and progress.ts (layer definitions).
+export const LAYER_META: LayerMeta[] = [
+  { id: 'L1',  name: '価値観・信念',   zone: 'CORE',  category: 'values',        threshold: 5, table: 'structuredFacts'      },
+  { id: 'L2',  name: '気質・才能',     zone: 'CORE',  category: 'character',     threshold: 3, table: 'structuredFacts'      },
+  { id: 'L3',  name: '人生年表',       zone: 'SHAPE', category: 'life_timeline', threshold: 8, table: 'lifeTimeline'         },
+  { id: 'L4',  name: '職務詳細',       zone: 'SHAPE', category: 'professional',  threshold: 3, table: 'professionalRecords'  },
+  { id: 'L5',  name: '関係性',         zone: 'SHAPE', category: 'relationships', threshold: 5, table: 'structuredFacts'      },
+  { id: 'L6',  name: '意見・スタンス', zone: 'SHAPE', category: 'opinions',      threshold: 5, table: 'structuredFacts'      },
+  { id: 'L7',  name: '恐れ・回避',     zone: 'SHAPE', category: 'fears',         threshold: 3, table: 'structuredFacts'      },
+  { id: 'L8',  name: '繰り返す癖',     zone: 'SHAPE', category: 'patterns',      threshold: 3, table: 'structuredFacts'      },
+  { id: 'L9',  name: '目標・方向感',   zone: 'STATE', category: 'goals',         threshold: 3, table: 'structuredFacts'      },
+  { id: 'L10', name: '好み・スタイル', zone: 'STATE', category: 'preferences',   threshold: 3, table: 'structuredFacts'      },
+]
+
 // Single source of truth for category → sections mapping.
 // Used by both the extraction prompt (provider.ts) and the markdown export (markdown.ts).
 export const LAYER_SECTIONS: Record<string, SectionDef[]> = {
@@ -62,10 +88,12 @@ export const LAYER_SECTIONS: Record<string, SectionDef[]> = {
 }
 
 // Generates the subcategory guidance block for the extraction prompt.
-export function buildSubcategoryPrompt(): string {
+export function buildSubcategoryPrompt(language = 'ja'): string {
   return Object.entries(LAYER_SECTIONS)
     .map(([category, sections]) => {
-      const options = sections.map(s => `${s.subcategory}（${s.heading}）`).join(' / ')
+      const options = language === 'en'
+        ? sections.map(s => `${s.subcategory} (${s.headingEn})`).join(' / ')
+        : sections.map(s => `${s.subcategory}（${s.heading}）`).join(' / ')
       return `${category}: ${options}`
     })
     .join('\n\n')

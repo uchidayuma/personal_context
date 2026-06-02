@@ -4,6 +4,7 @@ import { createRequire } from 'module'
 import { eq, and, sql, isNull } from 'drizzle-orm'
 import * as schema from '../db/schema.js'
 import { extractFromDocument, ModelStructuredOutputError } from '../llm/provider.js'
+import { getUserLanguage } from '../db/client.js'
 import type { AppVariables } from '../types.js'
 
 // pdf-parse and xlsx are CJS modules; use createRequire for ESM compatibility
@@ -65,9 +66,13 @@ importRoute.post('/', async (c) => {
 
   if (!text.trim()) return c.json({ error: 'no text could be extracted from this file' }, 400)
 
+  const db = c.get('db')
+  const userId = c.get('userId')
+  const language = await getUserLanguage(db, userId)
+
   let result: Awaited<ReturnType<typeof extractFromDocument>>
   try {
-    result = await extractFromDocument(text)
+    result = await extractFromDocument(text, language)
   } catch (err) {
     if (err instanceof ModelStructuredOutputError) {
       return c.json({ error: err.message, code: err.code }, 422)
@@ -75,63 +80,71 @@ importRoute.post('/', async (c) => {
     throw err
   }
 
-  const db = c.get('db')
-  const userId = c.get('userId')
   const imported = { timeline: 0, professional: 0, facts: 0 }
 
-  // Replace-on-reimport: clear previous import data before inserting new records
-  await db.delete(schema.lifeTimeline).where(and(eq(schema.lifeTimeline.userId, userId), eq(schema.lifeTimeline.source, 'import')))
-  await db.delete(schema.professionalRecords).where(and(eq(schema.professionalRecords.userId, userId), eq(schema.professionalRecords.source, 'import')))
-  await db.delete(schema.structuredFacts).where(and(eq(schema.structuredFacts.userId, userId), eq(schema.structuredFacts.source, 'import')))
+  await db.transaction(async (tx) => {
+    // Replace-on-reimport: clear previous import data before inserting new records
+    await Promise.all([
+      tx.delete(schema.lifeTimeline).where(and(eq(schema.lifeTimeline.userId, userId), eq(schema.lifeTimeline.source, 'import'))),
+      tx.delete(schema.professionalRecords).where(and(eq(schema.professionalRecords.userId, userId), eq(schema.professionalRecords.source, 'import'))),
+      tx.delete(schema.structuredFacts).where(and(eq(schema.structuredFacts.userId, userId), eq(schema.structuredFacts.source, 'import'))),
+    ])
 
-  for (const event of result.timeline) {
-    await db.insert(schema.lifeTimeline).values({
-      id: randomUUID(),
-      userId,
-      eventYear: event.year,
-      eventMonth: event.month,
-      eventDescription: event.description,
-      visibility: 'private',
-      source: 'import',
-    })
-    imported.timeline++
-  }
+    if (result.timeline.length > 0) {
+      await tx.insert(schema.lifeTimeline).values(
+        result.timeline.map(event => ({
+          id: randomUUID(),
+          userId,
+          eventYear: event.year,
+          eventMonth: event.month,
+          eventDescription: event.description,
+          visibility: 'private' as const,
+          source: 'import' as const,
+        }))
+      )
+      imported.timeline = result.timeline.length
+    }
 
-  for (const job of result.professional) {
-    await db.insert(schema.professionalRecords).values({
-      id: randomUUID(),
-      userId,
-      companyName: job.companyName,
-      role: job.role,
-      startYear: job.startYear,
-      startMonth: job.startMonth,
-      endYear: job.endYear,
-      endMonth: job.endMonth,
-      description: job.description,
-      skills: JSON.stringify(job.skills),
-      source: 'import',
-    })
-    imported.professional++
-  }
+    if (result.professional.length > 0) {
+      await tx.insert(schema.professionalRecords).values(
+        result.professional.map(job => ({
+          id: randomUUID(),
+          userId,
+          companyName: job.companyName,
+          role: job.role,
+          startYear: job.startYear,
+          startMonth: job.startMonth,
+          endYear: job.endYear,
+          endMonth: job.endMonth,
+          description: job.description,
+          skills: JSON.stringify(job.skills),
+          source: 'import' as const,
+        }))
+      )
+      imported.professional = result.professional.length
+    }
 
-  for (const fact of result.facts) {
-    await db.insert(schema.structuredFacts).values({
-      id: randomUUID(),
-      userId,
-      category: fact.category,
-      subcategory: fact.subcategory ?? null,
-      fact: fact.fact,
-      confidenceScore: 0.7,
-      visibility: 'private',
-      source: 'import',
-    })
-    imported.facts++
-  }
+    if (result.facts.length > 0) {
+      await tx.insert(schema.structuredFacts).values(
+        result.facts.map(fact => ({
+          id: randomUUID(),
+          userId,
+          category: fact.category,
+          subcategory: fact.subcategory ?? null,
+          fact: fact.fact,
+          confidenceScore: 0.7,
+          visibility: 'private' as const,
+          source: 'import' as const,
+        }))
+      )
+      imported.facts = result.facts.length
+    }
 
-  // インポート成功 = オンボーディング完了扱い
-  await db.update(schema.users)
-    .set({ onboardingCompletedAt: sql`CURRENT_TIMESTAMP` })
-    .where(and(eq(schema.users.id, userId), isNull(schema.users.onboardingCompletedAt)))
+    // インポート成功 = オンボーディング完了扱い
+    await tx.update(schema.users)
+      .set({ onboardingCompletedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(schema.users.id, userId), isNull(schema.users.onboardingCompletedAt)))
+  })
 
   return c.json({
     imported,
