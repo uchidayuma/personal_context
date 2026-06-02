@@ -12,7 +12,7 @@ sessionsRoute.post('/', async (c) => {
       ?? c.req.header('X-Real-IP')
       ?? 'unknown'
     const allowed = await checkDemoRateLimit(c.get('db'), ip)
-    if (!allowed) return c.json({ error: '1日1セッションまでです。明日またお試しください。' }, 429)
+    if (!allowed) return c.json({ error: '1日3セッションまでです。明日またお試しください。' }, 429)
   }
   try {
     const body: { language?: string } = await c.req.json<{ language?: string }>().catch(() => ({}))
