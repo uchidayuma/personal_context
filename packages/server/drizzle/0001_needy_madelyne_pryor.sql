@@ -1,0 +1,1 @@
+ALTER TABLE `user_questions` ADD `skipped_at` text;

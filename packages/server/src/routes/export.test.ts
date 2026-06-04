@@ -22,6 +22,13 @@ vi.mock('../export/markdown.js', () => ({
   }),
 }))
 
+vi.mock('jszip', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    file: vi.fn(),
+    generateAsync: vi.fn().mockResolvedValue(new Uint8Array([0x50, 0x4B, 0x03, 0x04])), // PK signature
+  })),
+}))
+
 describe('GET /api/export', () => {
   let app: ReturnType<typeof createTestApp>
 
@@ -63,5 +70,28 @@ describe('GET /api/export', () => {
     const res = await req(app, 'GET', '/api/export?visibility=all')
     expect(res.status).toBe(200)
     expect(res).toSatisfyApiSpec()
+  })
+})
+
+describe('GET /api/export/download', () => {
+  let app: ReturnType<typeof createTestApp>
+
+  beforeEach(() => {
+    app = createTestApp(exportRoute, '/api/export', createMockDb())
+  })
+
+  it('returns 200 with application/zip content-type', async () => {
+    const res = await req(app, 'GET', '/api/export/download')
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toMatch(/application\/zip/)
+    expect(res.headers['content-disposition']).toBe('attachment; filename="personal_context.zip"')
+  })
+
+  it('generates zip with markdown files', async () => {
+    const JSZip = (await import('jszip')).default
+    const res = await req(app, 'GET', '/api/export/download')
+    expect(res.status).toBe(200)
+    // Verify JSZip was instantiated
+    expect(JSZip).toHaveBeenCalled()
   })
 })

@@ -3,6 +3,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { sql } from 'drizzle-orm'
 import { initDatabase, ensureDefaultUser, ensureDemoUser, cleanupDemoData, clearSimulateData, DEFAULT_USER_ID, db, simulateDb } from './db/client.js'
 import { seedQuestions } from './db/seed.js'
 import type { AppVariables } from './types.js'
@@ -15,6 +16,7 @@ import { contextSummaryRoute } from './routes/contextSummary.js'
 import { importRoute } from './routes/import.js'
 import { progressRoute } from './routes/progress.js'
 import { insightsRoute } from './routes/insights.js'
+import { ttsRoute } from './routes/tts.js'
 
 async function bootstrap() {
   await initDatabase()
@@ -22,6 +24,21 @@ async function bootstrap() {
   await ensureDefaultUser(simulateDb)
   await seedQuestions(db)
   await seedQuestions(simulateDb)
+
+  // Graceful shutdown: flush WAL on SIGTERM/SIGINT
+  const gracefulShutdown = async () => {
+    console.log('[shutdown] Flushing database...')
+    try {
+      await db.execute(sql`PRAGMA wal_checkpoint(TRUNCATE);`)
+      await simulateDb.execute(sql`PRAGMA wal_checkpoint(TRUNCATE);`)
+    } catch (e) {
+      console.error('[shutdown] WAL flush failed:', e)
+      process.exit(1)
+    }
+    process.exit(0)
+  }
+  process.on('SIGTERM', gracefulShutdown)
+  process.on('SIGINT', gracefulShutdown)
 
   const app = new Hono<{ Variables: AppVariables }>()
 
@@ -57,6 +74,7 @@ async function bootstrap() {
   app.route('/api/import', importRoute)
   app.route('/api/progress', progressRoute)
   app.route('/api/insights', insightsRoute)
+  app.route('/api/tts', ttsRoute)
 
   if (process.env.DEMO_MODE === 'true') {
     setInterval(() => cleanupDemoData(db), 60 * 60 * 1000)

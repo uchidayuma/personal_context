@@ -32,10 +32,12 @@
     "transcribing": "Transcribing...",
     "voiceInput": "Voice input",
     "voiceMode": "Voice Mode",
+    "voiceModeDisabled": "Voice Mode (Requires Google Cloud TTS setup)",
     "modelError": "Model configuration error"
   },
   "export": {
-    "copy": "Copy to clipboard"
+    "copy": "Copy to clipboard",
+    "downloadZip": "Download all as ZIP"
   },
   "progress": {
     "label": "Context Richness",
@@ -74,7 +76,8 @@
     "listening": "Listening...",
     "processing": "Processing...",
     "speaking": "Coach is speaking",
-    "backToText": "✕ Back to text mode"
+    "backToText": "✕ Back to text mode",
+    "tapToStart": "Tap to start"
   },
   "import": {
     "complete": "Import complete",

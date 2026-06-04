@@ -101,6 +101,22 @@ export default function App() {
     setView('export')
   }
 
+  async function handleDownload() {
+    const res = await fetch('/api/export/download')
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    try {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'personal_context.zip'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } finally {
+      URL.revokeObjectURL(url)
+    }
+  }
+
   async function copyContent(key: string, content: string) {
     await navigator.clipboard.writeText(content)
     setCopiedKey(key)
@@ -161,7 +177,17 @@ export default function App() {
         {view === 'chat' && <Chat />}
         {view === 'dashboard' && <ContextDashboard onStartInterview={() => setView('chat')} />}
         {view === 'export' && exportFiles && (
-          <div className={styles.exportGrid}>
+          <div className={styles.exportContainer}>
+            <div className={styles.downloadSection}>
+              <button
+                onClick={handleDownload}
+                className={styles.downloadBtn}
+              >
+                <span className={styles.downloadIcon}>📦</span>
+                {t('export.downloadZip')}
+              </button>
+            </div>
+            <div className={styles.exportGrid}>
             {(() => {
               const layerMap = Object.fromEntries(exportLayers.map(l => [l.key, l]))
               return EXPORT_ORDER.map((item) => {
@@ -235,6 +261,7 @@ export default function App() {
                 )
               })
             })()}
+          </div>
           </div>
         )}
       </main>

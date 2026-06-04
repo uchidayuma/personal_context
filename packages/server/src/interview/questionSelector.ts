@@ -21,6 +21,29 @@ export async function selectNextQuestion(db: Db, userId: string, language: strin
     .where(eq(userQuestions.userId, userId))
   const answeredIds = answeredRows.map(r => r.questionId)
 
+  // Get categories skipped in the last 24 hours
+  const recentlySkippedRows = await db
+    .select({ questionId: userQuestions.questionId })
+    .from(userQuestions)
+    .where(
+      and(
+        eq(userQuestions.userId, userId),
+        sql`${userQuestions.skippedAt} IS NOT NULL`,
+        sql`datetime(${userQuestions.skippedAt}) > datetime('now', '-1 day')`,
+      )
+    )
+  const recentlySkippedIds = recentlySkippedRows.map(r => r.questionId)
+
+  // Get categories from recently skipped questions
+  const skippedCategories = new Set<string>()
+  if (recentlySkippedIds.length > 0) {
+    const skippedQuestions = await db
+      .select({ category: questions.category })
+      .from(questions)
+      .where(sql`${questions.id} IN (${sql.join(recentlySkippedIds.map(id => sql`${id}`), sql`, `)})`)
+    skippedQuestions.forEach(q => skippedCategories.add(q.category))
+  }
+
   const factCountRows = await db
     .select({ category: structuredFacts.category, cnt: count() })
     .from(structuredFacts)
@@ -33,7 +56,7 @@ export async function selectNextQuestion(db: Db, userId: string, language: strin
     ? and(eq(questions.isActive, true), notInArray(questions.id, answeredIds))
     : eq(questions.isActive, true)
 
-  const candidates = await db
+  let candidates = await db
     .select({
       id: questions.id,
       category: questions.category,
@@ -50,6 +73,31 @@ export async function selectNextQuestion(db: Db, userId: string, language: strin
     )
     .where(whereClause)
 
+  // Filter out questions from recently skipped categories
+  if (skippedCategories.size > 0) {
+    const beforeFilter = candidates.length
+    candidates = candidates.filter(q => !skippedCategories.has(q.category))
+    // If filtering removed all candidates, fall back to the original list
+    if (candidates.length === 0) {
+      candidates = await db
+        .select({
+          id: questions.id,
+          category: questions.category,
+          priority: questions.priority,
+          content: sql<string>`COALESCE(${questionTranslations.content}, ${questions.content})`,
+        })
+        .from(questions)
+        .leftJoin(
+          questionTranslations,
+          and(
+            eq(questionTranslations.questionId, questions.id),
+            eq(questionTranslations.language, language),
+          ),
+        )
+        .where(whereClause)
+    }
+  }
+
   if (candidates.length === 0) return null
 
   // 充足率（現在件数 / 閾値）が低いカテゴリの質問を優先し、同率なら priority 降順
@@ -60,7 +108,13 @@ export async function selectNextQuestion(db: Db, userId: string, language: strin
     return b.priority - a.priority
   })
 
-  return { id: candidates[0].id, content: candidates[0].content }
+  // Add variety: pick randomly from top 3 candidates instead of always choosing #1
+  // For deterministic testing, set DETERMINISTIC_QUESTION=true to always pick first
+  const topN = Math.min(3, candidates.length)
+  const randomIndex = process.env.DETERMINISTIC_QUESTION === 'true'
+    ? 0
+    : Math.floor(Math.random() * topN)
+  return { id: candidates[randomIndex].id, content: candidates[randomIndex].content }
 }
 
 export async function getExistingFactsSummary(db: Db, userId: string, language = 'ja'): Promise<string> {

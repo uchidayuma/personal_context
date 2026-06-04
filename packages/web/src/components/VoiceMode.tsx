@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
 import styles from './VoiceMode.module.css'
 
-type Phase = 'idle' | 'listening' | 'processing' | 'speaking'
+type Phase = 'ready' | 'idle' | 'listening' | 'processing' | 'speaking'
 
 interface Props {
   sessionId: string
@@ -20,43 +20,56 @@ export default function VoiceMode({
   onClose, onExchange, onEnd,
 }: Props) {
   const { t } = useTranslation()
-  const [phase, setPhase] = useState<Phase>('idle')
+  const [phase, setPhase] = useState<Phase>('ready')
   const [coachText, setCoachText] = useState(initialCoachMessage)
   const [userText, setUserText] = useState('')
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('')
-  const langCode = language === 'ja' ? 'ja-JP' : 'en-US'
 
   const beginListeningRef = useRef(() => {})
   const sessionEndedRef = useRef(false)
-  // Guard: speak initial message only once, after voices are ready
   const hasSpokenInitial = useRef(false)
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null)
+  const vadDelayMs = Number(import.meta.env.VITE_VAD_DELAY_MS ?? 300)
 
-  useEffect(() => {
-    function loadVoices() {
-      const all = window.speechSynthesis.getVoices()
-      const filtered = all.filter(v => v.lang.startsWith(language === 'ja' ? 'ja' : 'en'))
-      setVoices(filtered)
-      if (filtered.length > 0 && !selectedVoiceName) setSelectedVoiceName(filtered[0].name)
-    }
-    loadVoices()
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
-  }, [language])
 
-  function speak(text: string, onDone: () => void) {
+  async function speak(text: string, onDone: () => void) {
     setPhase('speaking')
-    const synth = window.speechSynthesis
-    synth.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = langCode
-    utter.rate = 1.1
-    const selectedVoice = voices.find(v => v.name === selectedVoiceName)
-    if (selectedVoice) utter.voice = selectedVoice
-    utter.onend = onDone
-    utter.onerror = () => onDone()
-    synth.speak(utter)
+
+    // Stop any currently playing audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause()
+      currentAudioRef.current = null
+    }
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, language }),
+      })
+      if (!res.ok) throw new Error(`TTS API error: ${res.status}`)
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      currentAudioRef.current = audio
+
+      audio.onended = () => {
+        URL.revokeObjectURL(url)
+        currentAudioRef.current = null
+        onDone()
+      }
+      audio.onerror = () => {
+        URL.revokeObjectURL(url)
+        currentAudioRef.current = null
+        onDone()
+      }
+
+      await audio.play()
+    } catch (err) {
+      console.error('[TTS] error:', err)
+      onDone()
+    }
   }
 
   const voice = useVoiceInput(async (text) => {
@@ -81,9 +94,12 @@ export default function VoiceMode({
 
       if (data.shouldEnd) {
         sessionEndedRef.current = true
-        speak(data.response, () => { onEnd(); onClose() })
+        speak(data.response, async () => {
+          await onEnd()
+          onClose()
+        })
       } else {
-        speak(data.response, () => beginListeningRef.current())
+        speak(data.response, () => setTimeout(() => beginListeningRef.current(), vadDelayMs))
       }
     } catch {
       setFetchError(t('voice.networkError'))
@@ -101,20 +117,21 @@ export default function VoiceMode({
     }
   }
 
-  // Speak initial message once voices are ready (voices=[] at mount → TTS fails silently)
-  useEffect(() => {
-    if (voices.length === 0 || hasSpokenInitial.current) return
+  // Called from the "tap to start" button — must be a direct user gesture so that
+  // Brave/Safari honour the Web Speech API autoplay policy.
+  function startConversation() {
+    if (hasSpokenInitial.current) return
     hasSpokenInitial.current = true
     if (initialCoachMessage) {
-      speak(initialCoachMessage, () => beginListeningRef.current())
+      speak(initialCoachMessage, () => setTimeout(() => beginListeningRef.current(), vadDelayMs))
     } else {
       beginListeningRef.current()
     }
-  }, [voices])
+  }
 
   useEffect(() => {
     return () => {
-      window.speechSynthesis.cancel()
+      if (currentAudioRef.current) currentAudioRef.current.pause()
       voice.stopListening()
     }
   }, [])
@@ -125,6 +142,7 @@ export default function VoiceMode({
     : phase
 
   const PHASE_LABEL: Record<Phase, string> = {
+    ready:      '',
     idle:       ended ? t('voice.sessionEnded') : '...',
     listening:  t('voice.listening'),
     processing: t('voice.processing'),
@@ -135,25 +153,14 @@ export default function VoiceMode({
     <div className={styles.overlay}>
       <button
         className={styles.closeBtn}
-        onClick={() => { window.speechSynthesis.cancel(); voice.stopListening(); onClose() }}
+        onClick={() => {
+          if (currentAudioRef.current) currentAudioRef.current.pause()
+          voice.stopListening()
+          onClose()
+        }}
       >
         {t('voice.backToText')}
       </button>
-
-      {voices.length > 0 && (
-        <div className={styles.voiceSelector}>
-          <span className={styles.voiceSelectorLabel}>🔊</span>
-          <select
-            className={styles.voiceSelect}
-            value={selectedVoiceName}
-            onChange={e => setSelectedVoiceName(e.target.value)}
-          >
-            {voices.map(v => (
-              <option key={v.name} value={v.name}>{v.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
 
       <div className={styles.coachCard}>
         <div className={styles.coachLabel}>COACH</div>
@@ -168,8 +175,16 @@ export default function VoiceMode({
       )}
 
       <div className={styles.micArea}>
-        <div className={`${styles.orb} ${styles[`orb_${displayPhase}`]}`} />
-        <p className={styles.phaseLabel}>{PHASE_LABEL[displayPhase]}</p>
+        {displayPhase === 'ready' ? (
+          <button className={styles.startBtn} onClick={startConversation}>
+            {t('voice.tapToStart')}
+          </button>
+        ) : (
+          <>
+            <div className={`${styles.orb} ${styles[`orb_${displayPhase}`]}`} />
+            <p className={styles.phaseLabel}>{PHASE_LABEL[displayPhase]}</p>
+          </>
+        )}
         {(voice.error || fetchError) && (
           <p className={styles.error}>{voice.error ?? fetchError}</p>
         )}

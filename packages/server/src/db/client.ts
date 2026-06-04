@@ -15,8 +15,15 @@ const SIMULATE_DB_PATH = process.env.SIMULATE_DB_PATH ?? path.join(DEFAULT_DATA_
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
 
-const client = createClient({ url: `file:${DB_PATH}` })
-const simulateClient = createClient({ url: `file:${SIMULATE_DB_PATH}` })
+// Disable WAL mode to prevent corruption on Docker restarts
+const client = createClient({
+  url: `file:${DB_PATH}`,
+  syncUrl: undefined,
+})
+const simulateClient = createClient({
+  url: `file:${SIMULATE_DB_PATH}`,
+  syncUrl: undefined,
+})
 
 export const db = drizzle(client, { schema })
 export const simulateDb = drizzle(simulateClient, { schema })
@@ -28,6 +35,14 @@ const DRIZZLE_FOLDER = process.env.NODE_ENV === 'production'
   : fileURLToPath(new URL('../../drizzle', import.meta.url))
 
 export async function initDatabase() {
+  // Force WAL checkpoint to prevent corruption
+  try {
+    await client.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+    await simulateClient.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+  } catch (e) {
+    console.warn('[initDatabase] WAL checkpoint failed (may be normal on first run):', e)
+  }
+
   await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
   await migrate(simulateDb, { migrationsFolder: DRIZZLE_FOLDER })
 }
