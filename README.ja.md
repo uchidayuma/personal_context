@@ -126,6 +126,38 @@ docker compose up
 
 `http://localhost:5173` を開く — 最初のインタビューセッションを始めよう。
 
+### オプション：音声対話モードを有効化
+
+音声ベースのインタビューセッション（タイピングの代わりに話す）を使いたい場合は、Google Cloud Text-to-Speechをセットアップします：
+
+1. **GCPプロジェクトを作成してAPIを有効化**
+   - [Google Cloud Console](https://console.cloud.google.com/) にアクセス
+   - 新しいプロジェクトを作成（または既存のものを使用）
+   - API ライブラリで **Cloud Text-to-Speech API** を有効化
+   - **無料枠**：月間100万文字 — 通常の使用には十分
+
+2. **サービスアカウントを作成して認証情報をダウンロード**
+   - **IAMと管理 → サービスアカウント** に移動
+   - 以下のロールでサービスアカウントを作成：**Cloud Text-to-Speech Client**（開発用ならEditorでも可）
+   - JSONキーを生成してダウンロード
+
+3. **キーファイルを配置してDockerを設定**
+   ```bash
+   # キーをプロジェクトルートに配置
+   mv ~/Downloads/your-key-*.json ./gcp-tts-key.json
+   
+   # .gitignoreに追加（デフォルトで含まれています）
+   echo "gcp-tts-key.json" >> .gitignore
+   ```
+
+4. **Dockerを再起動**
+   ```bash
+   docker compose down
+   docker compose up
+   ```
+
+インタビューセッションで音声対話ボタン（🎧）が有効になります。GCP認証情報がない場合、ボタンは無効のままでテキストのみモードが使用されます。
+
 ---
 
 ## 仕組み

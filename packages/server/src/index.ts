@@ -29,8 +29,8 @@ async function bootstrap() {
   const gracefulShutdown = async () => {
     console.log('[shutdown] Flushing database...')
     try {
-      await db.execute(sql`PRAGMA wal_checkpoint(TRUNCATE);`)
-      await simulateDb.execute(sql`PRAGMA wal_checkpoint(TRUNCATE);`)
+      await db.$client.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+      await simulateDb.$client.execute('PRAGMA wal_checkpoint(TRUNCATE);')
     } catch (e) {
       console.error('[shutdown] WAL flush failed:', e)
       process.exit(1)
