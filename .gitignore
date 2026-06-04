@@ -2,9 +2,7 @@ node_modules/
 dist/
 .env
 .env.*
-data/*.db
-data/*.db-shm
-data/*.db-wal
+data/*
 models/
 *.tsbuildinfo
 .claude/settings.local.json
