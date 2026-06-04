@@ -58,6 +58,24 @@ const SEED_QUESTIONS = [
   { id: 'q39', category: 'preferences', content: '仕事の進め方で「これが自分のリズムだ」と感じるやり方はありますか？', priority: 8 },
   { id: 'q40', category: 'preferences', content: '他の人のプレゼンや文章で「読みやすい・伝わりやすい」と感じるのはどういうスタイルですか？', priority: 7 },
   { id: 'q41', category: 'preferences', content: '一番集中できる環境・時間帯・状況を教えてください。', priority: 7 },
+
+  // 追加質問: 身体感覚・場面・対比の切り口
+  { id: 'q45', category: 'values', content: '最近、自分らしく動けたなと感じた瞬間はありますか？そのとき体はどんな感じでしたか？', priority: 9 },
+  { id: 'q46', category: 'values', content: '「これだけは妥協できない」と体が拒否反応を示したことはありますか？', priority: 8 },
+  { id: 'q47', category: 'goals', content: '今やっていることの中で、時間を忘れて没頭してしまうものはありますか？', priority: 9 },
+  { id: 'q48', category: 'goals', content: '誰にも頼まれていないのに、気づいたら考えたり調べたりしていることはありますか？', priority: 8 },
+  { id: 'q49', category: 'career', content: '仕事中に「あ、これ好きだな」と体が前のめりになった瞬間を覚えていますか？', priority: 9 },
+  { id: 'q50', category: 'career', content: '同じ成果でも、やり方によって体の重さが全然違うことがありますか？どんな違いですか？', priority: 8 },
+  { id: 'q51', category: 'life_events', content: '「あのとき行動して本当によかった」と今でも思い出す決断はありますか？', priority: 8 },
+  { id: 'q52', category: 'life_events', content: '環境が変わった瞬間、体が軽くなった（or 重くなった）経験はありますか？', priority: 8 },
+  { id: 'q53', category: 'character', content: 'ストレスがかかったとき、体のどこに一番先に出ますか？', priority: 7 },
+  { id: 'q54', category: 'character', content: '「考える前に体が動いてしまう」タイプですか？それとも「頭で納得しないと動けない」タイプですか？', priority: 8 },
+  { id: 'q55', category: 'opinions', content: '周りが「効率的」と言っているやり方が、自分には逆に遠回りに感じることはありますか？', priority: 7 },
+  { id: 'q56', category: 'opinions', content: '「これは本質じゃない」と感じるのに、なぜかみんなが重視していることはありますか？', priority: 8 },
+  { id: 'q57', category: 'fears', content: '過去に「安全な選択」をしたのに、なぜか後悔している決断はありますか？', priority: 8 },
+  { id: 'q58', category: 'patterns', content: 'お金・時間・人間関係で、同じ失敗を繰り返してしまうパターンはありますか？', priority: 8 },
+  { id: 'q59', category: 'skills', content: '他の人が苦労することを、自分は自然にできてしまうことはありますか？', priority: 9 },
+  { id: 'q60', category: 'education', content: '学校で習ったことより、独学で学んだことの方が役に立っていると感じますか？', priority: 7 },
 ]
 
 const EN_TRANSLATIONS: { questionId: string; content: string }[] = [
@@ -105,6 +123,22 @@ const EN_TRANSLATIONS: { questionId: string; content: string }[] = [
   { questionId: 'q39', content: 'Do you have a rhythm or way of working that feels distinctly yours?' },
   { questionId: 'q40', content: 'When someone else\'s presentation or writing feels easy to follow, what is it about their style that works for you?' },
   { questionId: 'q41', content: 'What environment, time of day, or situation helps you concentrate best?' },
+  { questionId: 'q45', content: 'Can you recall a recent moment when you felt like you were truly being yourself? How did your body feel?' },
+  { questionId: 'q46', content: 'Has there been something your body simply refused to compromise on?' },
+  { questionId: 'q47', content: 'Is there anything you do now where you lose track of time completely?' },
+  { questionId: 'q48', content: 'Is there something you find yourself thinking about or researching even though nobody asked you to?' },
+  { questionId: 'q49', content: 'Do you remember a moment at work when you thought "oh, I actually like this" and leaned in?' },
+  { questionId: 'q50', content: 'Have you noticed that the same outcome can feel completely different in your body depending on how you got there?' },
+  { questionId: 'q51', content: 'Is there a decision you made that you still think back on and feel glad you went for it?' },
+  { questionId: 'q52', content: 'Have you ever felt your body get lighter (or heavier) the moment your environment changed?' },
+  { questionId: 'q53', content: 'When you\'re stressed, where in your body do you feel it first?' },
+  { questionId: 'q54', content: 'Do you tend to move before thinking, or do you need to understand something in your head before you act?' },
+  { questionId: 'q55', content: 'Is there a method others call "efficient" that actually feels like a detour to you?' },
+  { questionId: 'q56', content: 'Is there something everyone else seems to prioritize that you feel isn\'t really the point?' },
+  { questionId: 'q57', content: 'Have you ever made the "safe choice" and ended up regretting it anyway?' },
+  { questionId: 'q58', content: 'Is there a pattern you keep repeating with money, time, or relationships — even though you know better?' },
+  { questionId: 'q59', content: 'Is there something others struggle with that comes naturally to you?' },
+  { questionId: 'q60', content: 'Do you feel that what you taught yourself has been more useful than what you learned in school?' },
 ]
 
 export async function seedQuestions(targetDb: Db) {

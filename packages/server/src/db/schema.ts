@@ -49,6 +49,7 @@ export const userQuestions = sqliteTable('user_questions', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   questionId: text('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
   answeredAt: text('answered_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  skippedAt: text('skipped_at'), // If non-null, this question was skipped (not answered)
 }, (t) => [primaryKey({ columns: [t.userId, t.questionId] })])
 
 export const STRUCTURED_FACT_CATEGORIES = [

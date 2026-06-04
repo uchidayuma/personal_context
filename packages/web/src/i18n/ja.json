@@ -32,10 +32,12 @@
     "transcribing": "変換中...",
     "voiceInput": "音声入力",
     "voiceMode": "音声対話モード",
+    "voiceModeDisabled": "音声対話モード (Google Cloud TTS の設定が必要)",
     "modelError": "モデル設定エラー"
   },
   "export": {
-    "copy": "クリップボードにコピー"
+    "copy": "クリップボードにコピー",
+    "downloadZip": "ZIP でまとめてダウンロード"
   },
   "progress": {
     "label": "コンテキスト充足度",
@@ -74,7 +76,8 @@
     "listening": "話してください...",
     "processing": "処理中...",
     "speaking": "コーチが話しています",
-    "backToText": "✕ テキストモードに戻る"
+    "backToText": "✕ テキストモードに戻る",
+    "tapToStart": "タップして開始"
   },
   "import": {
     "complete": "インポート完了",

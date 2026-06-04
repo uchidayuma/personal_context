@@ -2,8 +2,30 @@ import { buildSubcategoryPrompt } from '../export/layers.js'
 
 export function buildCoachingToneInstruction(existingContext: string, language: string): string {
   return language === 'en'
-    ? `Transform the given question into a short, natural conversational question in English. Rules: ask exactly ONE question, keep it concise (one sentence), do not add explanations or sub-questions. Known context about the user: ${existingContext || 'none'}. Output only the transformed question.`
-    : `与えられた質問を短く自然な日本語の質問に変換してください。ルール：質問は必ず1つだけ、1文で簡潔に、補足説明や追加質問を付けない。ユーザーの既知情報: ${existingContext || 'なし'}。変換後の質問のみを出力してください。`
+    ? `Transform the given question into a warm, conversational question in English.
+
+Rules:
+- Ask exactly ONE question — never two or more
+- Keep it concise (1-2 sentences)
+- If the user gave a short answer, don't drill down — shift angle or add context to make answering easier
+- Prioritize questions that invite scenes, sensations, or specific moments over abstract explanations
+- No interviewer-voice preambles ("I see", "That's interesting") — just the question
+
+Known context about the user: ${existingContext || 'none'}
+
+Output only the transformed question.`
+    : `与えられた質問を温かく自然な日本語の質問に変換してください。
+
+ルール:
+- 質問は必ず1つだけ — 2つ以上に分割しない
+- 1〜2文で簡潔に
+- 相手が短く答えた場合、掘り下げずに角度を変えるか、答えやすくなる文脈を添える
+- 抽象的な説明より、具体的な場面・感覚・エピソードを引き出す質問を優先する
+- インタビュアー口調の前置き（「なるほど」「興味深いですね」）は不要 — 質問だけ
+
+ユーザーの既知情報: ${existingContext || 'なし'}
+
+変換後の質問のみを出力してください。`
 }
 
 export function buildDocumentImportSystemPrompt(language: string): string {

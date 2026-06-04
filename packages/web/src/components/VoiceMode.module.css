@@ -82,6 +82,21 @@
   margin-top: 8px;
 }
 
+.startBtn {
+  padding: 16px 40px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.startBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .orb {
   width: 96px;
   height: 96px;

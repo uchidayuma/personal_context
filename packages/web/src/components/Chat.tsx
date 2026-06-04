@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from 'react'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
 import { useProgress } from '../hooks/useProgress.js'
 import { useChat } from '../hooks/useChat.js'
@@ -10,6 +11,7 @@ import styles from './Chat.module.css'
 export default function Chat() {
   const { t, i18n } = useTranslation()
   const { progress, savedNotice, refreshProgress } = useProgress()
+  const [ttsAvailable, setTtsAvailable] = useState(false)
   const {
     sessionId, messages, input, setInput,
     loading, ended, voiceMode, setVoiceMode,
@@ -18,6 +20,13 @@ export default function Chat() {
     sendMessage, endSessionNow, skipQuestion, resetSession, addMessages, setEnded,
   } = useChat(refreshProgress)
   const voice = useVoiceInput((text) => setInput(text))
+
+  useEffect(() => {
+    fetch('/api/tts/health')
+      .then(res => res.json())
+      .then(data => setTtsAvailable(data.available))
+      .catch(() => setTtsAvailable(false))
+  }, [])
 
   if (rateLimitHit) {
     return (
@@ -46,7 +55,7 @@ export default function Chat() {
           ended={ended}
           onClose={() => { setVoiceMode(false); refreshProgress() }}
           onExchange={(userMsg, coachMsg) => { addMessages(userMsg, coachMsg); refreshProgress() }}
-          onEnd={() => setEnded(true)}
+          onEnd={endSessionNow}
         />
       )}
       <ProgressHeader data={progress} remainingTurns={remainingTurns} />
@@ -140,11 +149,15 @@ export default function Chat() {
             </button>
           )}
           {sessionId && !ended && (
-            <span data-tooltip={`${t('chat.voiceMode')} (Coming Soon)`} style={{ position: 'relative', display: 'inline-flex' }}>
-              <button disabled className={styles.voiceModeBtn}>
-                🎧
-              </button>
-            </span>
+            <button
+              onClick={() => ttsAvailable && setVoiceMode(true)}
+              disabled={!ttsAvailable}
+              data-tooltip={ttsAvailable ? t('chat.voiceMode') : t('chat.voiceModeDisabled')}
+              className={styles.voiceModeBtn}
+              style={{ opacity: ttsAvailable ? 1 : 0.5, cursor: ttsAvailable ? 'pointer' : 'not-allowed' }}
+            >
+              🎧
+            </button>
           )}
           {voice.isSupported && (
             <button

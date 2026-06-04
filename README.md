@@ -109,6 +109,38 @@ docker compose up
 
 Open `http://localhost:5173` — start your first interview session.
 
+### Optional: Enable Voice Dialogue Mode
+
+If you want to use voice-based interview sessions (speak instead of typing), set up Google Cloud Text-to-Speech:
+
+1. **Create a GCP project and enable the API**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project (or use an existing one)
+   - Enable **Cloud Text-to-Speech API** in API Library
+   - **Free tier**: 1 million characters/month — enough for typical usage
+
+2. **Create a service account and download credentials**
+   - Go to **IAM & Admin → Service Accounts**
+   - Create a service account with role: **Cloud Text-to-Speech Client** (or Editor for dev)
+   - Generate a JSON key and download it
+
+3. **Place the key file and configure Docker**
+   ```bash
+   # Place the key in project root
+   mv ~/Downloads/your-key-*.json ./gcp-tts-key.json
+   
+   # Add to .gitignore (already included by default)
+   echo "gcp-tts-key.json" >> .gitignore
+   ```
+
+4. **Restart Docker**
+   ```bash
+   docker compose down
+   docker compose up
+   ```
+
+The voice dialogue button (🎧) will now be enabled in interview sessions. Without GCP credentials, the button remains disabled and text-only mode is used.
+
 ---
 
 ## How It Works

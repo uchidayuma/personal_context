@@ -92,8 +92,46 @@
 }
 
 /* Export view */
-.exportGrid {
+.exportContainer {
   max-width: 720px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.downloadSection {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: #e94560;
+  border: 1.5px solid #e94560;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadBtn:hover {
+  background: #e94560;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(233, 69, 96, 0.3);
+}
+
+.downloadIcon {
+  font-size: 16px;
+}
+
+.exportGrid {
   width: 100%;
   display: flex;
   flex-direction: column;

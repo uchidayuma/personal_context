@@ -99,8 +99,11 @@ export async function skipQuestion(db: Db, sessionId: string, userId = DEFAULT_U
 
   if (session.currentQuestionId) {
     await db.insert(userQuestions)
-      .values({ userId, questionId: session.currentQuestionId })
-      .onConflictDoNothing()
+      .values({ userId, questionId: session.currentQuestionId, skippedAt: sql`CURRENT_TIMESTAMP` })
+      .onConflictDoUpdate({
+        target: [userQuestions.userId, userQuestions.questionId],
+        set: { skippedAt: sql`CURRENT_TIMESTAMP` }
+      })
   }
 
   const nextQuestion = await selectNextQuestion(db, userId, language)
