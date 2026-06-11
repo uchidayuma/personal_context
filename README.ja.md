@@ -91,6 +91,8 @@ cd personal_context
 cp .env.example .env
 ```
 
+**データベース**：PostgreSQL を使用（Docker Compose で自動セットアップ）。データは Docker volume に永続化されます。
+
 `.env` を編集してLLMプロバイダーを選ぶ：
 
 ```bash
@@ -297,11 +299,12 @@ pnpm --filter @personal-context/mcp build
 | レイヤー | 技術 |
 |---|---|
 | ランタイム | Node.js 22、TypeScript、pnpm monorepo |
-| データベース | SQLite（`@libsql/client` + Drizzle ORM） |
+| データベース | PostgreSQL 16 + Drizzle ORM |
 | LLM | Vercel AI SDK — Ollama / OpenAI / Anthropic / DeepSeek |
 | サーバー | Hono |
 | フロントエンド | React + Vite |
 | コンテナ | Docker (node:22-alpine) |
+| デプロイ | fly.io（オプション） |
 
 ---
 

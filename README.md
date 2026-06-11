@@ -74,6 +74,8 @@ cd personal_context
 cp .env.example .env
 ```
 
+**Database**: The app uses PostgreSQL (automatically set up via Docker Compose). Data is persisted in a Docker volume.
+
 Edit `.env` and pick one LLM provider:
 
 ```bash
@@ -276,11 +278,12 @@ Rational explanations are already filtered through social expectations and self-
 | Layer | Technology |
 |---|---|
 | Runtime | Node.js 22, TypeScript, pnpm monorepo |
-| Database | SQLite via `@libsql/client` + Drizzle ORM |
+| Database | PostgreSQL 16 + Drizzle ORM |
 | LLM | Vercel AI SDK — Ollama / OpenAI / Anthropic / DeepSeek |
 | Server | Hono |
 | Frontend | React + Vite |
 | Container | Docker (node:22-alpine) |
+| Deployment | fly.io (optional) |
 
 ---
 
