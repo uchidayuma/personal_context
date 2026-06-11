@@ -45,11 +45,13 @@ export function createTestApp(
   route: Hono<{ Variables: AppVariables }>,
   mountPath: string,
   mockDb: Db,
+  opts: { userType?: string } = {},
 ) {
   const app = new Hono<{ Variables: AppVariables }>()
   app.use('*', async (c, next) => {
     c.set('db', mockDb)
     c.set('userId', 'test-user-id')
+    c.set('userType', opts.userType ?? 'free')
     await next()
   })
   app.route(mountPath, route)

@@ -12,7 +12,7 @@ vi.mock('../llm/provider.js', () => ({
 
 describe('factExtractor (feature)', () => {
   let db: Db
-  let teardown: () => void
+  let teardown: () => Promise<void>
   const userId = 'test-user'
   let sessionId: string
 
@@ -28,7 +28,7 @@ describe('factExtractor (feature)', () => {
     ])
   })
 
-  afterEach(() => teardown())
+  afterEach(async () => await teardown())
 
   describe('extractAndSaveFacts', () => {
     it('facts と factEvidences を正しくリンクして保存する', async () => {
@@ -110,7 +110,15 @@ describe('factExtractor (feature)', () => {
       })
 
       await extractAndSaveFacts(db, sessionId, userId, 'conversation')
+
+      // Debug: check what was saved
+      const allFacts = await db.select().from(schema.structuredFacts)
+      const allEvidences = await db.select().from(schema.factEvidences)
+      const allLogs = await db.select().from(schema.rawLogs).where(eq(schema.rawLogs.sessionId, sessionId))
+      console.log('Facts:', allFacts.length, 'Evidences:', allEvidences.length, 'Logs:', allLogs.length)
+
       const summary = await buildSessionSummary(db, sessionId)
+      console.log('Summary:', summary)
 
       expect(summary.facts['values']).toBe(2)
       expect(summary.facts['goals']).toBe(1)

@@ -9,7 +9,7 @@ import type { Db } from '../../types.js'
 const DRIZZLE_FOLDER = fileURLToPath(new URL('../../../drizzle', import.meta.url))
 
 // テスト用PostgreSQL接続（環境変数 TEST_DATABASE_URL または Docker上のデフォルト）
-export async function createTestDb(): Promise<{ db: Db; teardown: () => void }> {
+export async function createTestDb(): Promise<{ db: Db; teardown: () => Promise<void> }> {
   const connectionString = process.env.TEST_DATABASE_URL
     ?? 'postgresql://personal_context:personal_context@localhost:5432/personal_context_test'
 
@@ -19,9 +19,15 @@ export async function createTestDb(): Promise<{ db: Db; teardown: () => void }> 
   // マイグレーション実行
   await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
 
+  // テスト開始時に全データをクリア（CASCADE で外部キー制約を無視）
+  await client.unsafe(`
+    TRUNCATE TABLE users CASCADE
+  `)
+
   return {
     db,
     teardown: async () => {
+      // DB接続を閉じる
       await client.end()
     },
   }
