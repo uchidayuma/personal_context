@@ -1,31 +1,28 @@
-import { createClient } from '@libsql/client'
-import { drizzle } from 'drizzle-orm/libsql'
-import { migrate } from 'drizzle-orm/libsql/migrator'
+import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import { fileURLToPath } from 'url'
-import { tmpdir } from 'os'
-import { join } from 'path'
-import { unlinkSync } from 'fs'
 import * as schema from '../../db/schema.js'
 import type { Db } from '../../types.js'
 
 // src/test/helpers/ → ../../.. → packages/server/drizzle
 const DRIZZLE_FOLDER = fileURLToPath(new URL('../../../drizzle', import.meta.url))
 
-// libsql の :memory: URL は接続ごとに独立した DB を持つため、
-// db.transaction() が別接続を使うとテーブルが見えなくなる。
-// 一時ファイルを使うことでこの問題を回避する。
+// テスト用PostgreSQL接続（環境変数 TEST_DATABASE_URL または Docker上のデフォルト）
 export async function createTestDb(): Promise<{ db: Db; teardown: () => void }> {
-  const tmpPath = join(tmpdir(), `pc-test-${crypto.randomUUID()}.db`)
-  const client = createClient({ url: `file:${tmpPath}` })
+  const connectionString = process.env.TEST_DATABASE_URL
+    ?? 'postgresql://personal_context:personal_context@localhost:5432/personal_context_test'
+
+  const client = postgres(connectionString, { max: 1 })
   const db = drizzle(client, { schema })
+
+  // マイグレーション実行
   await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
+
   return {
     db,
-    teardown: () => {
-      client.close()
-      try { unlinkSync(tmpPath) } catch {}
-      try { unlinkSync(`${tmpPath}-wal`) } catch {}
-      try { unlinkSync(`${tmpPath}-shm`) } catch {}
+    teardown: async () => {
+      await client.end()
     },
   }
 }
