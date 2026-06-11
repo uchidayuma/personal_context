@@ -10,6 +10,10 @@
       "notice": "Demo: data clears when you close the tab. To keep your data,",
       "selfHost": "self-host it",
       "noticeSuffix": "."
+    },
+    "auth": {
+      "signIn": "Sign in",
+      "signUp": "Sign up"
     }
   },
   "demo": {

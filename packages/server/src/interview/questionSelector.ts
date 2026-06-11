@@ -29,7 +29,7 @@ export async function selectNextQuestion(db: Db, userId: string, language: strin
       and(
         eq(userQuestions.userId, userId),
         sql`${userQuestions.skippedAt} IS NOT NULL`,
-        sql`datetime(${userQuestions.skippedAt}) > datetime('now', '-1 day')`,
+        sql`${userQuestions.skippedAt} > NOW() - INTERVAL '1 day'`,
       )
     )
   const recentlySkippedIds = recentlySkippedRows.map(r => r.questionId)

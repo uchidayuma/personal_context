@@ -1,19 +1,27 @@
 import { Hono } from 'hono'
 
 import { startSession, startOnboarding, endSession, skipQuestion, buildSessionSummary } from '../interview/engine.js'
-import { checkDemoRateLimit } from '../db/client.js'
+import { checkDemoRateLimit, checkAnonymousRateLimit, checkFreeUserRateLimit } from '../db/client.js'
 import type { AppVariables } from '../types.js'
 
 export const sessionsRoute = new Hono<{ Variables: AppVariables }>()
 
 sessionsRoute.post('/', async (c) => {
-  if (process.env.DEMO_MODE === 'true') {
-    const ip = c.req.header('X-Forwarded-For')?.split(',')[0].trim()
-      ?? c.req.header('X-Real-IP')
-      ?? 'unknown'
-    const allowed = await checkDemoRateLimit(c.get('db'), ip)
+  const userType = c.get('userType') ?? 'free'
+  const ip = c.req.header('X-Forwarded-For')?.split(',')[0].trim()
+    ?? c.req.header('X-Real-IP')
+    ?? 'unknown'
+
+  // Rate limiting based on user type
+  if (userType === 'anonymous') {
+    const allowed = await checkAnonymousRateLimit(c.get('db'), ip)
+    if (!allowed) return c.json({ error: '1日3セッションまでです。明日またお試しください。' }, 429)
+  } else if (userType === 'free') {
+    const allowed = await checkFreeUserRateLimit(c.get('db'), c.get('userId'))
     if (!allowed) return c.json({ error: '1日3セッションまでです。明日またお試しください。' }, 429)
   }
+  // Premium users: no rate limit
+
   try {
     const body: { language?: string } = await c.req.json<{ language?: string }>().catch(() => ({}))
     const { sessionId, message } = await startSession(c.get('db'), c.get('userId'), body.language)

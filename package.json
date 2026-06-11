@@ -7,6 +7,7 @@
     "audit": "pnpm audit --audit-level=moderate",
     "simulate": "tsx scripts/simulate-interview.ts",
     "simulate:reset": "tsx scripts/simulate-interview.ts --reset-only",
+    "migrate:sqlite-to-postgres": "tsx scripts/migrate-sqlite-to-postgres.ts",
     "reset-db": "docker compose stop server 2>/dev/null; rm -f data/personal_context.db data/personal_context.db-wal data/personal_context.db-shm && docker compose start server 2>/dev/null && echo 'DB reset complete' || echo 'DB deleted. Restart server manually if not using Docker.'"
   },
   "devDependencies": {

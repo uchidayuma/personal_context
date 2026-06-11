@@ -1,16 +1,19 @@
-import { sqliteTable, text, integer, real, primaryKey } from 'drizzle-orm/sqlite-core'
+import { pgTable, text, integer, real, primaryKey, timestamp, boolean } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
-export const users = sqliteTable('users', {
+export const users = pgTable('users', {
   id: text('id').primaryKey(),
+  clerkId: text('clerk_id').unique(),
+  userType: text('user_type', { enum: ['anonymous', 'free', 'premium'] }).notNull().default('free'),
+  email: text('email').unique(),
   name: text('name'),
   language: text('language').notNull().default('ja'),
-  onboardingCompletedAt: text('onboarding_completed_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  onboardingCompletedAt: timestamp('onboarding_completed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export const sessions = sqliteTable('sessions', {
+export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   type: text('type', { enum: ['regular', 'onboarding'] }).notNull().default('regular'),
@@ -18,39 +21,39 @@ export const sessions = sqliteTable('sessions', {
   questionsAsked: integer('questions_asked').notNull().default(0),
   followupCount: integer('followup_count').notNull().default(0),
   currentQuestionId: text('current_question_id'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  endedAt: text('ended_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  endedAt: timestamp('ended_at'),
 })
 
-export const rawLogs = sqliteTable('raw_logs', {
+export const rawLogs = pgTable('raw_logs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   sessionId: text('session_id').notNull().references(() => sessions.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['system', 'assistant', 'user'] }).notNull(),
   content: text('content').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
-export const questions = sqliteTable('questions', {
+export const questions = pgTable('questions', {
   id: text('id').primaryKey(),
   category: text('category').notNull(),
   content: text('content').notNull(),
   priority: integer('priority').notNull().default(0),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  isActive: boolean('is_active').notNull().default(true),
 })
 
-export const questionTranslations = sqliteTable('question_translations', {
+export const questionTranslations = pgTable('question_translations', {
   questionId: text('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
   language: text('language').notNull(),
   content: text('content').notNull(),
-}, (t) => [primaryKey({ columns: [t.questionId, t.language] })])
+}, (t) => ({ pk: primaryKey({ columns: [t.questionId, t.language] }) }))
 
-export const userQuestions = sqliteTable('user_questions', {
+export const userQuestions = pgTable('user_questions', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   questionId: text('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
-  answeredAt: text('answered_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  skippedAt: text('skipped_at'), // If non-null, this question was skipped (not answered)
-}, (t) => [primaryKey({ columns: [t.userId, t.questionId] })])
+  answeredAt: timestamp('answered_at').notNull().defaultNow(),
+  skippedAt: timestamp('skipped_at'),
+}, (t) => ({ pk: primaryKey({ columns: [t.userId, t.questionId] }) }))
 
 export const STRUCTURED_FACT_CATEGORIES = [
   'childhood', 'education', 'career', 'values', 'goals', 'skills',
@@ -60,7 +63,7 @@ export const STRUCTURED_FACT_CATEGORIES = [
 
 export type StructuredFactCategory = typeof STRUCTURED_FACT_CATEGORIES[number]
 
-export const structuredFacts = sqliteTable('structured_facts', {
+export const structuredFacts = pgTable('structured_facts', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   category: text('category').$type<StructuredFactCategory>().notNull(),
@@ -69,16 +72,16 @@ export const structuredFacts = sqliteTable('structured_facts', {
   confidenceScore: real('confidence_score').notNull().default(0.8),
   visibility: text('visibility', { enum: ['public', 'private'] }).notNull().default('private'),
   source: text('source', { enum: ['import', 'interview'] }).notNull().default('interview'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export const factEvidences = sqliteTable('fact_evidences', {
+export const factEvidences = pgTable('fact_evidences', {
   factId: text('fact_id').notNull().references(() => structuredFacts.id, { onDelete: 'cascade' }),
   logId: text('log_id').notNull().references(() => rawLogs.id, { onDelete: 'cascade' }),
-}, (t) => [primaryKey({ columns: [t.factId, t.logId] })])
+}, (t) => ({ pk: primaryKey({ columns: [t.factId, t.logId] }) }))
 
-export const lifeTimeline = sqliteTable('life_timeline', {
+export const lifeTimeline = pgTable('life_timeline', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   eventYear: integer('event_year').notNull(),
@@ -88,16 +91,16 @@ export const lifeTimeline = sqliteTable('life_timeline', {
   eventDescription: text('event_description').notNull(),
   visibility: text('visibility', { enum: ['public', 'private'] }).notNull().default('private'),
   source: text('source', { enum: ['import', 'interview'] }).notNull().default('interview'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export const timelineEvidences = sqliteTable('timeline_evidences', {
+export const timelineEvidences = pgTable('timeline_evidences', {
   timelineId: text('timeline_id').notNull().references(() => lifeTimeline.id, { onDelete: 'cascade' }),
   logId: text('log_id').notNull().references(() => rawLogs.id, { onDelete: 'cascade' }),
-}, (t) => [primaryKey({ columns: [t.timelineId, t.logId] })])
+}, (t) => ({ pk: primaryKey({ columns: [t.timelineId, t.logId] }) }))
 
-export const professionalRecords = sqliteTable('professional_records', {
+export const professionalRecords = pgTable('professional_records', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   companyName: text('company_name').notNull(),
@@ -109,16 +112,16 @@ export const professionalRecords = sqliteTable('professional_records', {
   description: text('description'),
   skills: text('skills'),
   source: text('source', { enum: ['import', 'interview'] }).notNull().default('import'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
-export const demoRateLimit = sqliteTable('demo_rate_limit', {
+export const demoRateLimit = pgTable('demo_rate_limit', {
   ip: text('ip').notNull(),
   date: text('date').notNull(),
   sessionCount: integer('session_count').notNull().default(0),
-}, (t) => [primaryKey({ columns: [t.ip, t.date] })])
+}, (t) => ({ pk: primaryKey({ columns: [t.ip, t.date] }) }))
 
-export const sessionVignettes = sqliteTable('session_vignettes', {
+export const sessionVignettes = pgTable('session_vignettes', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   sessionId: text('session_id').notNull().references(() => sessions.id, { onDelete: 'cascade' }),
@@ -129,5 +132,18 @@ export const sessionVignettes = sqliteTable('session_vignettes', {
   insight: text('insight').notNull(),
   selfGap: text('self_gap'),
   visibility: text('visibility', { enum: ['public', 'private'] }).notNull().default('private'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+// New tables for multi-user support
+export const sessionQuota = pgTable('session_quota', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: text('date').notNull(), // ISO date string YYYY-MM-DD
+  sessionCount: integer('session_count').notNull().default(0),
+}, (t) => ({ pk: primaryKey({ columns: [t.userId, t.date] }) }))
+
+export const anonymousRateLimit = pgTable('anonymous_rate_limit', {
+  ip: text('ip').notNull(),
+  date: text('date').notNull(), // ISO date string YYYY-MM-DD
+  sessionCount: integer('session_count').notNull().default(0),
+}, (t) => ({ pk: primaryKey({ columns: [t.ip, t.date] }) }))

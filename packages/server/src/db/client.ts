@@ -1,52 +1,41 @@
-import { createClient } from '@libsql/client'
-import { drizzle } from 'drizzle-orm/libsql'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import { and, eq, sql } from 'drizzle-orm'
 import * as schema from './schema.js'
 import type { Db } from '../types.js'
-import path from 'path'
-import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { migrate } from 'drizzle-orm/libsql/migrator'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 
-// src/db/client.ts (dev) or dist/db/client.js (prod): 4 levels up = project root
-const DEFAULT_DATA_DIR = fileURLToPath(new URL('../../../../data', import.meta.url))
-const DB_PATH = process.env.DB_PATH ?? path.join(DEFAULT_DATA_DIR, 'personal_context.db')
-const SIMULATE_DB_PATH = process.env.SIMULATE_DB_PATH ?? path.join(DEFAULT_DATA_DIR, 'simulate.db')
+// PostgreSQL connection from DATABASE_URL environment variable
+const connectionString = process.env.DATABASE_URL ?? 'postgresql://personal_context:personal_context@localhost:5432/personal_context'
 
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
-
-// Disable WAL mode to prevent corruption on Docker restarts
-const client = createClient({
-  url: `file:${DB_PATH}`,
-  syncUrl: undefined,
-})
-const simulateClient = createClient({
-  url: `file:${SIMULATE_DB_PATH}`,
-  syncUrl: undefined,
-})
+// Create PostgreSQL client
+const client = postgres(connectionString, { max: 10 })
 
 export const db = drizzle(client, { schema })
-export const simulateDb = drizzle(simulateClient, { schema })
 
-// dev (tsx): import.meta.url = src/db/client.ts → ../../drizzle = packages/server/drizzle ✓
-// prod (tsup bundle): import.meta.url = dist/index.js → ../drizzle = packages/server/drizzle ✓
+// Migrations folder path
 const DRIZZLE_FOLDER = process.env.NODE_ENV === 'production'
   ? fileURLToPath(new URL('../drizzle', import.meta.url))
   : fileURLToPath(new URL('../../drizzle', import.meta.url))
 
 export async function initDatabase() {
-  // Force WAL checkpoint to prevent corruption
+  console.log('[initDatabase] Running PostgreSQL migrations...')
   try {
-    await client.execute('PRAGMA wal_checkpoint(TRUNCATE);')
-    await simulateClient.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+    await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
   } catch (e) {
-    console.warn('[initDatabase] WAL checkpoint failed (may be normal on first run):', e)
+    console.error('[initDatabase] Migration failed:', e)
+    throw e
   }
-
-  await migrate(db, { migrationsFolder: DRIZZLE_FOLDER })
-  await migrate(simulateDb, { migrationsFolder: DRIZZLE_FOLDER })
 }
 
+export async function clearSimulateData() {
+  // REMOVED: simulate database feature removed for simplicity
+  // Tests should use transactions with rollback instead
+  throw new Error('clearSimulateData is deprecated - use test transactions instead')
+}
+
+// User management helpers
 export const DEFAULT_USER_ID = 'local_default_user'
 
 export async function ensureDefaultUser(targetDb: Db = db) {
@@ -56,29 +45,18 @@ export async function ensureDefaultUser(targetDb: Db = db) {
     .where(eq(schema.users.id, DEFAULT_USER_ID))
   if (result.length === 0) {
     console.log('[DEBUG ensureDefaultUser] user not found, inserting...')
-    await targetDb.insert(schema.users).values({ id: DEFAULT_USER_ID, name: 'Local User', language: 'ja' })
+    await targetDb.insert(schema.users).values({
+      id: DEFAULT_USER_ID,
+      name: 'Local User',
+      language: 'ja',
+      userType: 'free',
+    })
   } else {
     console.log('[DEBUG ensureDefaultUser] user exists, onboarding_completed_at =', result[0].onboardingCompletedAt)
   }
 }
 
-export async function clearSimulateData() {
-  await simulateClient.executeMultiple(`
-    DELETE FROM session_vignettes;
-    DELETE FROM fact_evidences;
-    DELETE FROM timeline_evidences;
-    DELETE FROM user_questions;
-    DELETE FROM structured_facts;
-    DELETE FROM life_timeline;
-    DELETE FROM professional_records;
-    DELETE FROM raw_logs;
-    DELETE FROM sessions;
-    DELETE FROM users;
-  `)
-  await ensureDefaultUser(simulateDb)
-}
-
-export async function getUser(targetDb: Db, userId: string): Promise<{ name: string | null; language: string; onboardingCompletedAt: string | null }> {
+export async function getUser(targetDb: Db, userId: string): Promise<{ name: string | null; language: string; onboardingCompletedAt: Date | null }> {
   const [row] = await targetDb
     .select({
       name: schema.users.name,
@@ -97,8 +75,58 @@ export async function getUser(targetDb: Db, userId: string): Promise<{ name: str
 export async function ensureDemoUser(targetDb: Db, userId: string): Promise<void> {
   await targetDb
     .insert(schema.users)
-    .values({ id: userId, name: null, language: 'ja', onboardingCompletedAt: new Date().toISOString() })
+    .values({
+      id: userId,
+      name: null,
+      language: 'ja',
+      onboardingCompletedAt: new Date(),
+      userType: 'anonymous',
+    })
     .onConflictDoNothing()
+}
+
+export async function ensureAnonymousUser(targetDb: Db, userId: string): Promise<void> {
+  await targetDb
+    .insert(schema.users)
+    .values({
+      id: userId,
+      name: null,
+      language: 'ja',
+      onboardingCompletedAt: new Date(),
+      userType: 'anonymous',
+    })
+    .onConflictDoNothing()
+}
+
+export async function getOrCreateUserFromClerk(
+  targetDb: Db,
+  clerkId: string,
+  email: string | null,
+  name: string | null,
+): Promise<{ id: string; userType: string }> {
+  // Check if user exists by clerkId
+  const [existing] = await targetDb
+    .select({ id: schema.users.id, userType: schema.users.userType })
+    .from(schema.users)
+    .where(eq(schema.users.clerkId, clerkId))
+
+  if (existing) {
+    return existing
+  }
+
+  // Create new user
+  const userId = crypto.randomUUID()
+  await targetDb.insert(schema.users).values({
+    id: userId,
+    clerkId,
+    email,
+    name,
+    language: 'ja',
+    userType: 'free',
+    onboardingCompletedAt: null, // New users need to complete onboarding
+  })
+
+  return { id: userId, userType: 'free' }
 }
 
 export async function checkDemoRateLimit(targetDb: Db, ip: string): Promise<boolean> {
@@ -113,21 +141,70 @@ export async function checkDemoRateLimit(targetDb: Db, ip: string): Promise<bool
     .values({ ip, date: today, sessionCount: 1 })
     .onConflictDoUpdate({
       target: [schema.demoRateLimit.ip, schema.demoRateLimit.date],
-      set: { sessionCount: sql`session_count + 1` },
+      set: { sessionCount: sql`demo_rate_limit.session_count + 1` },
+    })
+  return true
+}
+
+export async function checkAnonymousRateLimit(targetDb: Db, ip: string): Promise<boolean> {
+  const today = new Date().toISOString().slice(0, 10)
+  const existing = await targetDb
+    .select({ sessionCount: schema.anonymousRateLimit.sessionCount })
+    .from(schema.anonymousRateLimit)
+    .where(and(eq(schema.anonymousRateLimit.ip, ip), eq(schema.anonymousRateLimit.date, today)))
+
+  if (existing.length > 0 && existing[0].sessionCount >= 3) return false
+
+  await targetDb
+    .insert(schema.anonymousRateLimit)
+    .values({ ip, date: today, sessionCount: 1 })
+    .onConflictDoUpdate({
+      target: [schema.anonymousRateLimit.ip, schema.anonymousRateLimit.date],
+      set: { sessionCount: sql`anonymous_rate_limit.session_count + 1` },
+    })
+  return true
+}
+
+export async function checkFreeUserRateLimit(targetDb: Db, userId: string): Promise<boolean> {
+  const today = new Date().toISOString().slice(0, 10)
+  const existing = await targetDb
+    .select({ sessionCount: schema.sessionQuota.sessionCount })
+    .from(schema.sessionQuota)
+    .where(and(eq(schema.sessionQuota.userId, userId), eq(schema.sessionQuota.date, today)))
+
+  if (existing.length > 0 && existing[0].sessionCount >= 3) return false
+
+  await targetDb
+    .insert(schema.sessionQuota)
+    .values({ userId, date: today, sessionCount: 1 })
+    .onConflictDoUpdate({
+      target: [schema.sessionQuota.userId, schema.sessionQuota.date],
+      set: { sessionCount: sql`session_quota.session_count + 1` },
     })
   return true
 }
 
 export async function cleanupDemoData(targetDb: Db): Promise<void> {
+  // Delete anonymous users older than 20 minutes
   await targetDb
     .delete(schema.users)
     .where(and(
-      sql`datetime(created_at) < datetime('now', '-2 hours')`,
-      sql`id != ${DEFAULT_USER_ID}`,
+      eq(schema.users.userType, 'anonymous'),
+      sql`${schema.users.createdAt} < NOW() - INTERVAL '20 minutes'`,
     ))
+
+  // Delete old rate limit records
   await targetDb
     .delete(schema.demoRateLimit)
-    .where(sql`date < date('now')`)
+    .where(sql`${schema.demoRateLimit.date} < CURRENT_DATE`)
+
+  await targetDb
+    .delete(schema.anonymousRateLimit)
+    .where(sql`${schema.anonymousRateLimit.date} < CURRENT_DATE`)
+
+  await targetDb
+    .delete(schema.sessionQuota)
+    .where(sql`${schema.sessionQuota.date} < CURRENT_DATE - INTERVAL '7 days'`)
 }
 
 export async function getUserLanguage(targetDb: Db, userId: string): Promise<string> {
@@ -141,6 +218,6 @@ export async function getUserLanguage(targetDb: Db, userId: string): Promise<str
 export async function updateUserLanguage(targetDb: Db, userId: string, language: string): Promise<void> {
   await targetDb
     .update(schema.users)
-    .set({ language, updatedAt: sql`CURRENT_TIMESTAMP` })
+    .set({ language, updatedAt: new Date() })
     .where(eq(schema.users.id, userId))
 }
