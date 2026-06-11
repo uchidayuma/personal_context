@@ -1,4 +1,23 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=personal_context
+      - POSTGRES_PASSWORD=personal_context
+      - POSTGRES_DB=personal_context
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U personal_context"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c max_connections=200
+
   server:
     build:
       context: .
@@ -20,12 +39,15 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - DB_PATH=/app/data/personal_context.db
-      - SIMULATE_DB_PATH=/app/data/simulate.db
+      - DATABASE_TYPE=postgres
+      - DATABASE_URL=postgresql://personal_context:personal_context@postgres:5432/personal_context
       - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-tts-key.json
       # Set WATCH=true to enable hot-reload (may cause instability on macOS due to polling)
       # - WATCH=true
       # - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   web:
     build:
@@ -41,3 +63,6 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+
+volumes:
+  postgres_data:

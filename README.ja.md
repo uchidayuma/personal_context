@@ -13,7 +13,7 @@
 
 ## ⚡️ ライブデモ
 
-**インストール不要で試せます：** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
+**インストール不要で試せます：** [personal-context.fly.dev/](https://personal-context.fly.dev/)
 
 > **注意：** デモセッションは揮発性です。タブを閉じるとデータが消えます。1IPあたり1日3セッションまで。
 

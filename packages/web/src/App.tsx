@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react'
 import SimpleMarkdown from './components/SimpleMarkdown.js'
 import Chat from './components/Chat.js'
 import Onboarding from './components/Onboarding.js'
@@ -169,6 +170,21 @@ export default function App() {
               </button>
             ))}
           </div>
+          {import.meta.env.VITE_DEMO_MODE !== 'true' && (
+            <div className={styles.authGroup}>
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button type="button" className={styles.authBtn}>{t('app.auth.signIn')}</button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button type="button" className={styles.authBtn}>{t('app.auth.signUp')}</button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-in">
+                <UserButton />
+              </Show>
+            </div>
+          )}
         </nav>
       </header>
 

@@ -12,7 +12,7 @@ vi.mock('../llm/provider.js', () => ({
 
 describe('sessionManager (feature)', () => {
   let db: Db
-  let teardown: () => void
+  let teardown: () => Promise<void>
 
   beforeEach(async () => {
     ({ db, teardown } = await createTestDb())
@@ -20,7 +20,7 @@ describe('sessionManager (feature)', () => {
     await seedUser(db, 'user-b')
   })
 
-  afterEach(() => teardown())
+  afterEach(async () => await teardown())
 
   describe('endSession', () => {
     it('throws when userId does not match session owner', async () => {

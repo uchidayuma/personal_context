@@ -12,8 +12,11 @@ vi.mock('../interview/engine.js', () => ({
 
 vi.mock('../db/client.js', () => ({
   checkDemoRateLimit: vi.fn().mockResolvedValue(true),
+  checkAnonymousRateLimit: vi.fn().mockResolvedValue(true),
+  checkFreeUserRateLimit: vi.fn().mockResolvedValue(true),
   DEFAULT_USER_ID: 'local_default_user',
   ensureDemoUser: vi.fn().mockResolvedValue(undefined),
+  ensureAnonymousUser: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('POST /api/sessions', () => {
@@ -31,22 +34,29 @@ describe('POST /api/sessions', () => {
   })
 })
 
-describe('POST /api/sessions (demo mode rate limit)', () => {
+describe('POST /api/sessions (rate limit)', () => {
   let app: ReturnType<typeof createTestApp>
-  const originalEnv = process.env.DEMO_MODE
 
   beforeEach(() => {
-    process.env.DEMO_MODE = 'true'
-    app = createTestApp(sessionsRoute, '/api/sessions', createMockDb())
+    const mockDb = createMockDb()
+    app = createTestApp(sessionsRoute, '/api/sessions', mockDb, { userType: 'anonymous' })
   })
 
-  afterEach(() => {
-    process.env.DEMO_MODE = originalEnv
+  it('returns 429 when rate limit exceeded (anonymous user)', async () => {
+    const { checkAnonymousRateLimit } = await import('../db/client.js')
+    vi.mocked(checkAnonymousRateLimit).mockResolvedValueOnce(false)
+    const res = await req(app, 'POST', '/api/sessions')
+    expect(res.status).toBe(429)
+    expect(res.body).toMatchObject({ error: expect.any(String) })
+    expect(res).toSatisfyApiSpec()
   })
 
-  it('returns 429 when rate limit exceeded', async () => {
-    const { checkDemoRateLimit } = await import('../db/client.js')
-    vi.mocked(checkDemoRateLimit).mockResolvedValueOnce(false)
+  it('returns 429 when rate limit exceeded (free user)', async () => {
+    const mockDb = createMockDb()
+    app = createTestApp(sessionsRoute, '/api/sessions', mockDb, { userType: 'free' })
+
+    const { checkFreeUserRateLimit } = await import('../db/client.js')
+    vi.mocked(checkFreeUserRateLimit).mockResolvedValueOnce(false)
     const res = await req(app, 'POST', '/api/sessions')
     expect(res.status).toBe(429)
     expect(res.body).toMatchObject({ error: expect.any(String) })

@@ -21,7 +21,7 @@ Analyze the conversation so far and identify which categories are still uncovere
 
 ## Rules
 1. NEVER ask about something the user already mentioned
-2. Ask EXACTLY ONE question per response — never combine multiple questions
+2. **EXACTLY ONE question mark (?) per response** — never combine multiple questions like "...? ...?"
 3. If followup_count < ${MAX_ONBOARDING_FOLLOWUPS} AND gaps exist: ask ONE short question about the most important gap (askedFollowup: true)
 4. If followup_count >= ${MAX_ONBOARDING_FOLLOWUPS} OR all critical categories are covered: end briefly (shouldEndSession: true)
 5. When ending: one short sentence only.
@@ -40,7 +40,7 @@ Analyze the conversation so far and identify which categories are still uncovere
 
 ## 行動ルール
 1. ユーザーがすでに話した内容について絶対に再度聞かない
-2. **1つの返答の中で質問は必ず1つだけ**。複数聞きたくても最重要の1つだけ選ぶ
+2. **疑問符「？」は1つの返答に最大1つまで**。「〜か？ 〜か？」のように複数の質問を含めない
 3. followup_count < ${MAX_ONBOARDING_FOLLOWUPS} かつ不足がある場合: 最も重要な不足に対して短い質問を1つだけする（askedFollowup: true）
 4. followup_count >= ${MAX_ONBOARDING_FOLLOWUPS} または全カテゴリがカバーされた場合: 短く終了する（shouldEndSession: true）
 5. 終了時: 1文だけ。長い締めの言葉は不要。
@@ -70,7 +70,7 @@ This is a context-building tool, not a therapy session. When the user's answer i
 
 ## Rules
 1. Respond in English. Keep your response SHORT — one brief acknowledgment sentence, then move on.
-2. NEVER ask more than ONE question per response. If you want to ask multiple things, pick the single most important one.
+2. **EXACTLY ONE question mark (?) per response**. Never ask two questions like "...? ...?" in a single response. If you have multiple things to ask, pick the single most important one.
 3. Keep empathy brief — one short sentence max. Do not over-validate.
 4. If followup_count < ${MAX_FOLLOWUPS_PER_QUESTION}: ask ONE follow-up to get a concrete detail (askedFollowup: true)
 5. If followup_count >= ${MAX_FOLLOWUPS_PER_QUESTION}: do not ask a follow-up (askedFollowup: false)
@@ -95,7 +95,7 @@ ${existingFacts}
 
 ## 行動ルール
 1. 必ず日本語で返答してください。返答は**短く**——共感1文＋次のアクション。
-2. **1つの返答の中で質問は必ず1つだけ**。複数聞きたいことがあっても、最も重要な1つだけ選ぶ。
+2. **絶対に1つの質問だけ**。「〜か？ 〜か？」のように2つ以上の質問文（?で終わる文）を含めてはいけない。1つの返答に含められる疑問符「？」は最大1つまで。
 3. 共感の前置きは1文以内で短く。長い賞賛や「その言葉に〜がにじみ出ています」のような過剰な共感は不要。
 4. followup_count < ${MAX_FOLLOWUPS_PER_QUESTION} の場合: 具体的なディテールを1つ引き出すフォローアップ質問を1つする（askedFollowup: true）
 5. followup_count >= ${MAX_FOLLOWUPS_PER_QUESTION} の場合: フォローアップはしない（askedFollowup: false）
