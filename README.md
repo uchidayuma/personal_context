@@ -18,7 +18,7 @@ Answer a few interview questions each day. The engine quietly builds a structure
 
 ## ⚡️ Live Demo
 
-**Try it without installing anything:** [personal-context-demo.fly.dev/](https://personal-context-demo.fly.dev/)
+**Try it without installing anything:** [personal-context.fly.dev/](https://personal-context.fly.dev/)
 
 > **Note:** Demo sessions are ephemeral — data is not persisted after you close the tab. Limited to 3 sessions per IP per day.
 
